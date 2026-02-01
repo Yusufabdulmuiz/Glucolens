@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
@@ -7,7 +7,8 @@ import api from '@/services/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { AuthLayout } from '@/components/layout/AuthLayout';
-import { registerSchema, RegisterFormData } from '@/lib/validation';
+// FIX: Added 'type' keyword to RegisterFormData
+import { registerSchema, type RegisterFormData } from '@/lib/validation';
 
 /**
  * Registration Page Component
@@ -35,7 +36,6 @@ const Register = () => {
       });
       
       // Auto-login after registration (if API returns token)
-      // Or redirect to login page
       if ((response.data as any).access_token) {
          login((response.data as any).user, (response.data as any).access_token);
          navigate('/dashboard');

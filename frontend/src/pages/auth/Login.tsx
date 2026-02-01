@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -7,8 +7,8 @@ import api from '@/services/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { AuthLayout } from '@/components/layout/AuthLayout';
-import { loginSchema, LoginFormData } from '@/lib/validation';
-import { AuthResponse } from '@/types/auth';
+import { loginSchema, type LoginFormData } from '@/lib/validation';
+import { type AuthResponse } from '@/types/auth';
 
 /**
  * Login Page Component
