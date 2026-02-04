@@ -1,0 +1,93 @@
+/**
+ * @file src/services/mockAdapter.ts
+ * @description
+ * This file implements the "Mock Mode" for the frontend.
+ * It intercepts HTTP requests sent via the global Axios instance and returns
+ * simulated responses. This allows frontend development to proceed independently
+ * of backend availability.
+ * * @note This file is ONLY active when import.meta.env.DEV is true or VITE_USE_MOCK is set.
+ */
+
+import MockAdapter from 'axios-mock-adapter';
+import api from '@/services/api';
+
+// Define the simulated user delay (in milliseconds) to mimic real network latency
+const RESPONSE_DELAY = 800;
+
+/**
+ * Initialize the Mock Adapter on the 'api' axios instance.
+ * We use { onNoMatch: "passthrough" } to allow un-mocked requests (like external APIs)
+ * to still go through to the real internet if needed.
+ */
+const mock = new MockAdapter(api, { 
+  delayResponse: RESPONSE_DELAY,
+  onNoMatch: "passthrough" 
+});
+
+// ----------------------------------------------------------------------
+// MOCK DATA CONSTANTS
+// ----------------------------------------------------------------------
+
+const MOCK_USER = {
+  id: 'user_12345',
+  name: 'Jean Pierre', // Personalized for the developer
+  email: 'jp@glucolens.com',
+  avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=JeanPierre',
+  role: 'researcher'
+};
+
+const MOCK_TOKEN = {
+  access_token: 'mock_jwt_token_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
+  expires_in: 3600, // 1 hour
+  token_type: 'bearer'
+};
+
+// ----------------------------------------------------------------------
+// ENDPOINTS
+// ----------------------------------------------------------------------
+
+/**
+ * POST /auth/login
+ * @returns {AuthResponse}
+ */
+mock.onPost('/auth/login').reply((config) => {
+  console.info(`[MockAPI] 🟢 POST ${config.url}`, JSON.parse(config.data));
+  
+  // Simulate a successful login for ANY valid email/password combo
+  return [200, {
+    ...MOCK_TOKEN,
+    user: MOCK_USER
+  }];
+});
+
+/**
+ * POST /auth/register
+ * @returns {AuthResponse}
+ */
+mock.onPost('/auth/register').reply((config) => {
+  console.info(`[MockAPI] 🟢 POST ${config.url}`, JSON.parse(config.data));
+  
+  const requestData = JSON.parse(config.data);
+
+  return [201, {
+    ...MOCK_TOKEN,
+    user: {
+      ...MOCK_USER,
+      name: requestData.full_name || 'New User',
+      email: requestData.email
+    }
+  }];
+});
+
+/**
+ * GET /user/profile
+ * @returns {User}
+ */
+mock.onGet('/user/profile').reply(200, MOCK_USER);
+
+console.warn(
+  '%c ⚠️ MOCK ADAPTER INITIALIZED ⚠️ \n API calls are being intercepted by the frontend. ',
+  'background: #F59E0B; color: black; font-weight: bold; padding: 4px; border-radius: 4px;'
+);
+
+export default mock;

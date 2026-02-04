@@ -2,19 +2,25 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+// Stores & Services
 import { useAuthStore } from '@/store/authStore';
 import api from '@/services/api';
+import { registerSchema, type RegisterFormData } from '@/lib/validation';
+import { type AuthResponse } from '@/types/auth';
+
+// Components
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { AuthLayout } from '@/components/layout/AuthLayout';
-// FIX: Added 'type' keyword to RegisterFormData
-import { registerSchema, type RegisterFormData } from '@/lib/validation';
 
 /**
- * Registration Page Component
+ * Register Page Component
+ * Handles new user registration and auto-login.
  */
 const Register = () => {
-  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
 
@@ -26,34 +32,48 @@ const Register = () => {
     resolver: zodResolver(registerSchema),
   });
 
+  /**
+   * Handle Registration Submission
+   * @param data - Validated form data from Zod
+   */
   const onSubmit = async (data: RegisterFormData) => {
-    setError(null);
+    setServerError(null);
+
     try {
-      const response = await api.post('/auth/register', {
+      // 1. Type-Safe API Call
+      // The Mock Adapter (or real backend) will return the User + Token
+      const response = await api.post<AuthResponse>('/auth/register', {
         full_name: data.fullName,
         email: data.email,
         password: data.password
       });
+
+      // 2. Validate Response Data
+      const { user, access_token } = response.data;
       
-      // Auto-login after registration (if API returns token)
-      if ((response.data as any).access_token) {
-         login((response.data as any).user, (response.data as any).access_token);
-         navigate('/dashboard');
-      } else {
-         navigate('/auth/login');
+      if (!user || !access_token) {
+        throw new Error("Registration successful, but server returned invalid data.");
       }
 
-    } catch (err: any) {
-      // -- TEMPORARY DEV FALLBACK --
-      if (import.meta.env.DEV) {
-         console.warn("⚠️ DEV MODE: Simulating successful registration");
-         login({ id: '2', name: data.fullName, email: data.email }, 'mock-token');
-         navigate('/dashboard');
-         return;
+      // 3. Auto-Login & Redirect
+      // We immediately log the user in with the token we just received
+      login(user, access_token);
+      console.log('[Register] Success. Auto-logging in...');
+      navigate('/dashboard');
+
+    } catch (err: unknown) {
+      console.error('[Register] Request Failed:', err);
+
+      // 4. Professional Error Handling
+      if (axios.isAxiosError(err)) {
+        // Handle 409 Conflict (Email exists) or 400 Bad Request
+        const message = err.response?.data?.message || 'Registration failed. Please try again.';
+        setServerError(message);
+      } else if (err instanceof Error) {
+        setServerError(err.message);
+      } else {
+        setServerError('An unexpected error occurred.');
       }
-      // -- END DEV FALLBACK --
-      
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
     }
   };
 
@@ -66,17 +86,18 @@ const Register = () => {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {error && (
-          <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md">
-            {error}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
+        {/* Server Error Alert */}
+        {serverError && (
+          <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md flex items-center gap-2">
+            <span className="font-bold">Error:</span> {serverError}
           </div>
         )}
 
         <div className="space-y-4">
           <Input
             label="Full Name"
-            placeholder="John Doe"
+            placeholder="Jean Pierre"
             error={errors.fullName?.message}
             {...register('fullName')}
           />
@@ -103,16 +124,20 @@ const Register = () => {
           />
         </div>
 
-        <Button type="submit" className="w-full" isLoading={isSubmitting}>
+        <Button 
+          type="submit" 
+          className="w-full" 
+          isLoading={isSubmitting}
+        >
           Create Account
         </Button>
       </form>
 
-      <div className="text-center text-sm">
+      <div className="mt-6 text-center text-sm">
         <span className="text-gray-500">Already have an account? </span>
         <Link 
           to="/auth/login" 
-          className="font-medium text-primary-600 hover:text-primary-500 hover:underline"
+          className="font-medium text-primary-600 hover:text-primary-500 hover:underline transition-colors"
         >
           Sign in
         </Link>

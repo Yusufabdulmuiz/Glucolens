@@ -1,10 +1,11 @@
-@import "tailwindcss";
-@config "../tailwind.config.js";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* We use @layer to inject custom styles into the base layer */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @layer base {
   body {
-    /* applying the custom color defined in tailwind.config.js */
     @apply bg-surface-ground text-gray-900 font-sans antialiased;
   }
 }
