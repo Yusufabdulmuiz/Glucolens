@@ -1,3 +1,4 @@
+/* 1. Import the Font */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -6,6 +7,9 @@
 
 @layer base {
   body {
+    /* This 'bg-surface-ground' MUST match the 
+       colors.surface.ground key in tailwind.config.js 
+    */
     @apply bg-surface-ground text-gray-900 font-sans antialiased;
   }
 }
