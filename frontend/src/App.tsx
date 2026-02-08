@@ -1,7 +1,5 @@
-import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
-import { LoadingScreen } from '@/components/ui/LoadingScreen';
 
 // Page Imports 
 import Login from '@/pages/auth/Login';
@@ -11,20 +9,7 @@ import AssessmentManager from '@/pages/assessment/AssessmentManager';
 import Settings from '@/pages/settings/Settings';
 
 const App = () => {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Force the loader to show for 4 seconds
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 4000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return <LoadingScreen fullScreen={true} message="Initializing Glucolens..." />;
-  }
-
+  // NO loading state here. The app loads instantly.
   return (
     <Router>
       <Routes>
