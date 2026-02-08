@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
 
 // Stores & Services
 import { useAuthStore } from '@/store/authStore';
@@ -18,7 +17,7 @@ import { AuthLayout } from '@/components/layout/AuthLayout';
  * Bypasses the backend for testing purposes.
  */
 const Login = () => {
-  // State for handling API errors
+  // State for handling errors
   const [serverError, setServerError] = useState<string | null>(null);
   
   const navigate = useNavigate();
@@ -53,17 +52,16 @@ const Login = () => {
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // 2. Create Fake User Data
-      // This mimics what the backend WOULD send back
       const fakeUser = {
         id: "demo-user-123",
-        email: data.email, // Uses whatever email you typed
+        email: data.email, 
         name: "Dr. Yusuf (Demo)",
         role: "doctor",
       };
       
       const fakeToken = "mock-access-token-xyz-123";
 
-      // 3. Update Global Store (The App now thinks you are logged in)
+      // 3. Update Global Store
       console.log(`[Demo Login] Success. Welcome ${fakeUser.name}`);
       login(fakeUser, fakeToken);
 
@@ -118,50 +116,6 @@ const Login = () => {
           isLoading={isSubmitting}
         >
           Sign in (Demo)
-        </Button>
-      </form>
-
-      <div className="mt-6 text-center text-sm">
-        <span className="text-gray-500">Don't have an account? </span>
-        <Link 
-          to="/auth/register" 
-          className="font-medium text-primary-600 hover:text-primary-500 hover:underline transition-colors"
-        >
-          Create an account
-        </Link>
-      </div>
-    </AuthLayout>
-  );
-};
-
-export default Login;
-        )}
-
-        <div className="space-y-4">
-          <Input
-            label="Email"
-            type="email"
-            placeholder="name@example.com"
-            error={errors.email?.message}
-            {...register('email')}
-            autoComplete="email"
-          />
-          <Input
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            error={errors.password?.message}
-            {...register('password')}
-            autoComplete="current-password"
-          />
-        </div>
-
-        <Button 
-          type="submit" 
-          className="w-full" 
-          isLoading={isSubmitting}
-        >
-          Sign in
         </Button>
       </form>
 
