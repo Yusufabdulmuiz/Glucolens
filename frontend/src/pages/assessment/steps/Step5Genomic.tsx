@@ -6,6 +6,7 @@ import { Dna, Upload, X, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { assessmentService } from '@/services/assessmentService';
+import { AnalysisScreen } from '../AnalysisScreen';
 
 export default function Step5Genomic() {
   const navigate = useNavigate();
@@ -15,6 +16,9 @@ export default function Step5Genomic() {
   const [fileName, setFileName] = useState<string | null>(
     data.genomicFile ? data.genomicFile.name : null
   );
+  
+  // State to control the "Visual Theater"
+  const [showAnalysis, setShowAnalysis] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,27 +36,37 @@ export default function Step5Genomic() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  // 1. User clicks "Finish" -> Submit Data -> Trigger Animation
   const handleFinish = async () => {
     setIsSubmitting(true);
     
     try {
-      // 1. Call the Service
+      // Real (or Mock) submission happens first
       await assessmentService.submitAssessment(data);
+      console.log("Assessment Data Uploaded. Starting Simulation...");
       
-      console.log("Assessment Submitted Successfully");
-      
-      // 2. Cleanup and Redirect
-      resetAssessment(); 
-      navigate('/dashboard'); 
+      // Instead of redirecting immediately, show the analysis screen
+      setShowAnalysis(true);
       
     } catch (error) {
       console.error("Submission failed", error);
       alert("Failed to submit assessment. Please try again.");
-    } finally {
       setIsSubmitting(false);
     }
   };
 
+  // 2. Animation calls this when it hits 100%
+  const handleAnalysisComplete = () => {
+    resetAssessment();
+    navigate('/dashboard'); 
+  };
+
+  // 3. Render the Analysis Screen Overlay if active
+  if (showAnalysis) {
+    return <AnalysisScreen onComplete={handleAnalysisComplete} />;
+  }
+
+  // Standard Render
   return (
     <WizardLayout 
       title="Genomic Data" 
