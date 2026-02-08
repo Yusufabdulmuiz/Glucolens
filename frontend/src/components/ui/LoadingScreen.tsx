@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Activity } from "lucide-react"; // REMOVED Loader2
+import { Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LoadingScreenProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -8,66 +8,36 @@ interface LoadingScreenProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const LoadingScreen = React.forwardRef<HTMLDivElement, LoadingScreenProps>(
-  ({ className, message = "Initializing...", fullScreen = true, ...props }, ref) => {
-    
-    // State to cycle through "Fake System Checks"
-    const [statusText, setStatusText] = React.useState(message);
-    
-    React.useEffect(() => {
-      if (!fullScreen) return;
-      
-      const steps = [
-        "Connecting to Glucolens Neural Net...",
-        "Verifying Biometric Data...",
-        "Syncing Patient Records...",
-        "System Ready."
-      ];
-      
-      let i = 0;
-      const interval = setInterval(() => {
-        setStatusText(steps[i % steps.length]);
-        i++;
-      }, 800); // Change text every 800ms
-
-      return () => clearInterval(interval);
-    }, [fullScreen]);
-
+  ({ className, message = "Loading...", fullScreen = false, ...props }, ref) => {
     return (
       <div
         ref={ref}
         className={cn(
-          "flex flex-col items-center justify-center transition-all duration-500",
+          "flex flex-col items-center justify-center transition-all duration-300",
           fullScreen
-            ? "fixed inset-0 z-50 bg-white/80 backdrop-blur-md" 
-            : "w-full h-[200px] bg-gray-50/50 rounded-xl border border-dashed border-gray-200",
+            ? "fixed inset-0 z-50 bg-slate-50/90 backdrop-blur-sm" // Glass overlay for full screen
+            : "w-full h-full min-h-[140px] bg-transparent", // Transparent for inside cards
           className
         )}
         {...props}
       >
-        <div className="relative flex items-center justify-center mb-6">
-          {/* Outer Ring (Spinning) */}
-          <div className="absolute inset-0 border-4 border-green-100 rounded-full animate-[spin_3s_linear_infinite]" />
+        <div className="relative flex items-center justify-center mb-4">
+          {/* Outer Ring (Subtle Blue) */}
+          <div className="absolute inset-[-8px] border-[3px] border-blue-100 rounded-full animate-[spin_3s_linear_infinite]" />
           
-          {/* Inner Ring (Spinning Reverse) */}
-          <div className="absolute inset-2 border-4 border-t-green-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin" />
+          {/* Inner Ring (Brand Blue) */}
+          <div className="absolute inset-[-8px] border-[3px] border-t-blue-600 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin" />
           
-          {/* Center Icon (Pulse) */}
-          <div className="bg-white p-4 rounded-full shadow-lg animate-pulse z-10">
-             <Activity className="h-8 w-8 text-green-600" />
+          {/* Center Icon */}
+          <div className="relative h-12 w-12 bg-white rounded-full shadow-lg shadow-blue-100/50 flex items-center justify-center z-10 border border-blue-50">
+             <Activity className="h-6 w-6 text-blue-600 animate-pulse" />
           </div>
         </div>
 
-        {/* Text Animation */}
-        <div className="flex flex-col items-center space-y-2">
-          <p className="text-lg font-semibold text-gray-700 animate-pulse">
-            {fullScreen ? statusText : message}
-          </p>
-          {fullScreen && (
-            <p className="text-xs text-green-600 font-mono bg-green-50 px-2 py-1 rounded-md">
-              SECURE CONNECTION ESTABLISHED
-            </p>
-          )}
-        </div>
+        {/* Dynamic Message */}
+        <p className="text-sm font-medium text-slate-600 animate-pulse tracking-wide">
+          {message}
+        </p>
       </div>
     );
   }
