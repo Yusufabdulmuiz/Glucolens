@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Activity, Loader2 } from "lucide-react"; // Added Activity icon
+import { Activity } from "lucide-react"; // REMOVED Loader2
 import { cn } from "@/lib/utils";
 
 interface LoadingScreenProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -38,7 +38,7 @@ const LoadingScreen = React.forwardRef<HTMLDivElement, LoadingScreenProps>(
         className={cn(
           "flex flex-col items-center justify-center transition-all duration-500",
           fullScreen
-            ? "fixed inset-0 z-50 bg-white/80 backdrop-blur-md" // Glass effect
+            ? "fixed inset-0 z-50 bg-white/80 backdrop-blur-md" 
             : "w-full h-[200px] bg-gray-50/50 rounded-xl border border-dashed border-gray-200",
           className
         )}
