@@ -3,6 +3,8 @@ import { Droplet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LanguageSelector } from '@/components/ui/LanguageSelector'; 
 
+
+
 interface AuthLayoutProps {
   children: React.ReactNode;
   className?: string;
