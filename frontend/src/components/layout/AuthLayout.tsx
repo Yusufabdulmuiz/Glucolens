@@ -42,7 +42,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
         
         {/* Footer */}
         <div className="text-center text-xs text-gray-400 mt-8">
-          <p>© 2026 Glucolens. Secure Medical Platform.</p>
+          <p>© 2026 Glucolens. All rights reserved.</p>
         </div>
 
       </div>
