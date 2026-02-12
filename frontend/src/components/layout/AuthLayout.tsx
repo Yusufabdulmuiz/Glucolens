@@ -3,8 +3,6 @@ import { Droplet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LanguageSelector } from '@/components/ui/LanguageSelector'; 
 
-
-
 interface AuthLayoutProps {
   children: React.ReactNode;
   className?: string;
@@ -31,7 +29,8 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
         
         {/* App Header */}
         <div className="flex flex-col items-center space-y-2 text-center mb-8">
-          <div className="h-12 w-12 bg-primary-50 rounded-2xl flex items-center justify-center text-primary-600 mb-2 transition-transform hover:scale-105">
+        
+          <div className="h-12 w-12 bg-primary-500 rounded-2xl flex items-center justify-center text-white mb-2 transition-transform hover:scale-105 shadow-md shadow-primary-500/20">
             <Droplet size={28} fill="currentColor" />
           </div>
           <h1 className="text-xl font-bold tracking-tight text-gray-900">
