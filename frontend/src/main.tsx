@@ -4,6 +4,11 @@ import './index.css';
 import App from './App';
 
 // ----------------------------------------------------------------------
+// CONFIGURATION IMPORTS
+// ----------------------------------------------------------------------
+import './lib/i18n'; // This Loads translation logic
+
+// ----------------------------------------------------------------------
 // MOCK ADAPTER LOADER
 // ----------------------------------------------------------------------
 // Logic: Load the mock database if we are in:
@@ -19,3 +24,4 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 );
+
