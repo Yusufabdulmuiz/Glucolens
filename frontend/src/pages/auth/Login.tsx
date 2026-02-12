@@ -2,149 +2,168 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Droplet, Eye, EyeOff } from 'lucide-react';
 
-// Stores & Services
 import { useAuthStore } from '@/store/authStore';
 import { loginSchema, type LoginFormData } from '@/lib/validation';
-
-// Components
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { AuthLayout } from '@/components/layout/AuthLayout';
-import { LoadingScreen } from '@/components/ui/LoadingScreen'; // <--- NEW IMPORT
+import { LoadingScreen } from '@/components/ui/LoadingScreen';
 
-/**
- * Login Page Component (DEMO VERSION)
- * Bypasses the backend for testing purposes.
- */
 const Login = () => {
-  // State for handling errors
-  const [serverError, setServerError] = useState<string | null>(null);
-  
-  // NEW: State to control the Blue Full-Screen Loader
-  const [showLoader, setShowLoader] = useState(false);
-
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const login = useAuthStore((state) => state.login);
+  
+  // State
+  const [showLoader, setShowLoader] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  // Determine where to send the user after login
   const from = location.state?.from?.pathname || '/dashboard';
 
-  // Initialize React Hook Form
   const {
     register,
     handleSubmit,
-    formState: { errors }, // Removed isSubmitting because we use showLoader now
+    setValue,
+    formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: ''
-    }
+    defaultValues: { email: '', password: '' }
   });
 
-  /**
-   * Handle Form Submission (MOCKED)
-   * This version DOES NOT call the API. It logs you in immediately.
-   */
+  // Handle Login
   const onSubmit = async (data: LoginFormData) => {
     setServerError(null);
-    
-    // 1. TRIGGER THE BLUE SCREEN IMMEDIATELY
     setShowLoader(true);
 
     try {
-      // 2. Fake a 3-second delay (Longer wait = "Serious Medical App" feel)
+      // Simulate network delay
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
-      // 3. Create Fake User Data
+      // Mock User Data
       const fakeUser = {
-        id: "demo-user-123",
+        id: "1",
         email: data.email, 
         name: "Dr. Yusuf (Demo)",
         role: "doctor",
       };
       
-      const fakeToken = "mock-access-token-xyz-123";
-
-      // 4. Update Global Store
-      console.log(`[Demo Login] Success. Welcome ${fakeUser.name}`);
-      login(fakeUser, fakeToken);
-
-      // 5. Navigate to Dashboard
+      login(fakeUser, "mock-token-xyz");
       navigate(from, { replace: true });
 
-    } catch (err: unknown) {
-      console.error('[Login] Request Failed:', err);
-      setServerError('An unexpected error occurred. Please try again.');
-      setShowLoader(false); // Turn off loader if it fails
+    } catch (err) {
+      console.error(err);
+      setServerError(t('invalid_credentials') || "Invalid email or password");
+      setShowLoader(false);
     }
+  };
+
+  const handleDemoFill = () => {
+    setValue('email', 'demo@glucolens.com');
+    setValue('password', 'password123');
   };
 
   return (
     <>
-      {/* NEW: The Full Screen Overlay */}
       {showLoader && (
         <LoadingScreen 
           fullScreen={true} 
-          message="Authenticating Credentials..." 
+          message={t('logging_in') || "Authenticating..."} 
         />
       )}
 
-      <AuthLayout>
-        <div className="flex flex-col space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
-          <p className="text-sm text-gray-500">
-            (Demo Mode: Enter ANY email/password)
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
-          {/* Global Server Error Alert */}
-          {serverError && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md flex items-center gap-2">
-              <span className="font-bold">Error:</span> {serverError}
+      <AuthLayout hideHeader={true}>
+        <div className="bg-white rounded-2xl shadow-soft p-8 sm:p-10 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          
+          <div className="flex flex-col items-center space-y-2 text-center">
+            <div className="h-12 w-12 bg-primary-50 rounded-2xl flex items-center justify-center text-primary-600 mb-2 transform transition-transform hover:scale-110 duration-300">
+              <Droplet size={28} fill="currentColor" />
             </div>
-          )}
-
-          <div className="space-y-4">
-            <Input
-              label="Email"
-              type="email"
-              placeholder="demo@glucolens.com"
-              error={errors.email?.message}
-              {...register('email')}
-              autoComplete="email"
-            />
-            <Input
-              label="Password"
-              type="password"
-              placeholder="••••••••"
-              error={errors.password?.message}
-              {...register('password')}
-              autoComplete="current-password"
-            />
+            <h1 className="text-xl font-bold tracking-tight text-gray-900">
+              Glucolens
+            </h1>
+            <p className="text-sm text-gray-500 font-medium">
+              {t('welcome')}
+            </p>
           </div>
 
-          <Button 
-            type="submit" 
-            className="w-full" 
-            isLoading={showLoader} // Keeps the button spinner spinning too!
-            disabled={showLoader}  // Stops double-clicking
-          >
-            Sign in (Demo)
-          </Button>
-        </form>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            {serverError && (
+              <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg text-center font-medium">
+                {serverError}
+              </div>
+            )}
+            
+            <Input
+              label={t('email_label')}
+              {...register('email')}
+              error={errors.email?.message}
+              placeholder="name@example.com"
+              className="h-11"
+              disabled={showLoader}
+            />
+            
+            <div className="relative">
+               <Input
+                label={t('password_label')}
+                type={showPassword ? "text" : "password"}
+                {...register('password')}
+                error={errors.password?.message}
+                placeholder="••••••••"
+                className="h-11 pr-10"
+                disabled={showLoader}
+              />
+              <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-[38px] text-gray-400 hover:text-gray-600"
+                  disabled={showLoader}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+            </div>
 
-        <div className="mt-6 text-center text-sm">
-          <span className="text-gray-500">Don't have an account? </span>
-          <Link 
-            to="/auth/register" 
-            className="font-medium text-primary-600 hover:text-primary-500 hover:underline transition-colors"
-          >
-            Create an account
-          </Link>
+            <Button 
+              type="submit" 
+              className="w-full bg-primary-600 hover:bg-primary-700 h-11 text-base shadow-lg shadow-primary-600/20"
+              isLoading={showLoader}
+              disabled={showLoader}
+            >
+              {t('login_button')}
+            </Button>
+
+            <div className="flex items-center justify-center">
+              <Link to="/forgot-password" className="text-sm font-semibold text-primary-600 hover:text-primary-700">
+                {t('forgot_password')}
+              </Link>
+            </div>
+
+             <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-100"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-400 font-medium">Or</span>
+                </div>
+              </div>
+
+             <button 
+                type="button"
+                onClick={handleDemoFill}
+                disabled={showLoader}
+                className="w-full bg-white border border-gray-200 text-gray-700 font-semibold h-11 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+              >
+                {t('demo_button')}
+              </button>
+          </form>
+
+           <div className="text-center text-xs text-gray-500 mt-6">
+            {t('no_account')} <Link to="/auth/register" className="text-primary-600 font-bold hover:underline">{t('sign_up')}</Link>
+          </div>
         </div>
       </AuthLayout>
     </>
