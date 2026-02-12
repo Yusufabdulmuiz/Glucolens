@@ -1,34 +1,49 @@
 import React from 'react';
+import { Droplet } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LanguageSelector } from '@/components/ui/LanguageSelector'; 
 
 interface AuthLayoutProps {
   children: React.ReactNode;
   className?: string;
 }
 
-/**
- * Layout wrapper for public authentication pages (Login, Register).
- * Centers content on a neutral background.
- */
-export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, className }) => {
+export const AuthLayout: React.FC<AuthLayoutProps> = ({ 
+  children, 
+  className,
+}) => {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-surface-ground p-4">
-      <div className={cn("w-full max-w-md space-y-8", className)}>
-        {/* Logo Placeholder */}
-        <div className="flex flex-col items-center justify-center text-center">
-          <div className="h-12 w-12 rounded-xl bg-primary-500 flex items-center justify-center shadow-soft">
-            <span className="text-white font-bold text-2xl">G</span>
+    <div className="min-h-screen w-full flex items-center justify-center bg-surface-ground p-4 relative overflow-hidden">
+      
+      {/* Global Utilities */}
+      <div className="absolute top-4 right-4 z-50">
+        <LanguageSelector />
+      </div>
+
+      {/* Main Card Container */}
+      <div className={cn(
+        "w-full max-w-[400px] bg-white rounded-2xl shadow-soft p-8 sm:p-10 relative z-10",
+        "animate-in fade-in zoom-in-95 duration-300", 
+        className
+      )}>
+        
+        {/* App Header */}
+        <div className="flex flex-col items-center space-y-2 text-center mb-8">
+          <div className="h-12 w-12 bg-primary-50 rounded-2xl flex items-center justify-center text-primary-600 mb-2 transition-transform hover:scale-105">
+            <Droplet size={28} fill="currentColor" />
           </div>
-          <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-xl font-bold tracking-tight text-gray-900">
             Glucolens
-          </h2>
+          </h1>
         </div>
 
         {children}
         
-        <div className="text-center text-sm text-gray-500">
-          <p>© 2026 Glucolens. All rights reserved.</p>
+        {/* Footer */}
+        <div className="text-center text-xs text-gray-400 mt-8">
+          <p>© 2026 Glucolens. Secure Medical Platform.</p>
         </div>
+
       </div>
     </div>
   );
