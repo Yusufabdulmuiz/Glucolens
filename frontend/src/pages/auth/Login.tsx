@@ -5,48 +5,50 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Eye, EyeOff } from 'lucide-react';
 
-
+// Stores & Services
 import { useAuthStore } from '@/store/authStore';
 import { loginSchema, type LoginFormData } from '@/lib/validation';
+
+// Components
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
 
+/**
+ * Login Page Component
+ * Handles user authentication and demo access.
+ */
 const Login = () => {
-  // HOOKS
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const login = useAuthStore((state) => state.login);
   
-  // STATE
+  // State for UI controls
   const [showLoader, setShowLoader] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
   const from = location.state?.from?.pathname || '/dashboard';
 
+  // Initialize React Hook Form
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' }
   });
 
-  // ----------------------------------------------------------------------
-  // HANDLERS
-  // ----------------------------------------------------------------------
-
+  // Handle Form Submission
   const onSubmit = async (data: LoginFormData) => {
     setServerError(null);
     setShowLoader(true);
 
     try {
-      // MOCK: Simulate network latency for realism
+      // Simulate network delay
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
       const fakeUser = {
@@ -66,9 +68,16 @@ const Login = () => {
     }
   };
 
-  const handleDemoFill = () => {
-    setValue('email', 'demo@glucolens.com');
-    setValue('password', 'password123');
+  // Immediate Dashboard Access for Demo
+  const handleDemoAccess = () => {
+    const demoUser = {
+      id: "demo-user",
+      email: "demo@glucolens.com",
+      name: "Dr. Demo User",
+      role: "doctor"
+    };
+    login(demoUser, "demo-token");
+    navigate('/dashboard', { replace: true });
   };
 
   return (
@@ -82,7 +91,6 @@ const Login = () => {
 
       <AuthLayout>
         
-        {/* WELCOME SUB-HEADER */}
         <div className="text-center mb-6">
           <p className="text-sm text-gray-500 font-medium">
             {t('welcome')}
@@ -96,7 +104,6 @@ const Login = () => {
             </div>
           )}
           
-          {/* EMAIL */}
           <Input
             label={t('email_label')}
             {...register('email')}
@@ -106,7 +113,6 @@ const Login = () => {
             disabled={showLoader}
           />
           
-          {/* PASSWORD */}
           <div className="relative">
              <Input
               label={t('password_label')}
@@ -127,10 +133,9 @@ const Login = () => {
               </button>
           </div>
 
-          {/* ACTIONS */}
           <Button 
             type="submit" 
-            className="w-full bg-primary-600 hover:bg-primary-700 h-11 text-base shadow-lg shadow-primary-600/20"
+            className="w-full bg-primary-500 hover:bg-primary-600 h-11 text-base shadow-lg shadow-primary-500/20"
             isLoading={showLoader}
             disabled={showLoader}
           >
@@ -143,7 +148,6 @@ const Login = () => {
             </Link>
           </div>
 
-           {/* DIVIDER */}
            <div className="relative py-2">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-100"></div>
@@ -153,17 +157,16 @@ const Login = () => {
               </div>
             </div>
 
-           <button 
+           <Button 
               type="button"
-              onClick={handleDemoFill}
+              onClick={handleDemoAccess}
               disabled={showLoader}
               className="w-full bg-white border border-gray-200 text-gray-700 font-semibold h-11 rounded-xl text-sm hover:bg-gray-50 transition-colors"
             >
               {t('demo_button')}
-            </button>
+            </Button>
         </form>
 
-        {/* SIGN UP LINK */}
         <div className="text-center text-xs text-gray-500 mt-6">
           {t('no_account')} <Link to="/auth/register" className="text-primary-600 font-bold hover:underline">{t('sign_up')}</Link>
         </div>
