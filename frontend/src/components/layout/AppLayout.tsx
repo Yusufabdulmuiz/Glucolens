@@ -40,7 +40,7 @@ export const AppLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Mobile Header (Visible only on small screens) */}
       <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200 sticky top-0 z-40">
         {/* Replaced hardcoded text with Logo Component */}
-        <Logo layout="horizontal" iconSize={24} linkTo="/dashboard" />
+        <Logo layout="horizontal" linkTo="/dashboard" />
         
         <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
           {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
