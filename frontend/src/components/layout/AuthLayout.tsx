@@ -1,7 +1,7 @@
 import React from 'react';
-import { Droplet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LanguageSelector } from '@/components/ui/LanguageSelector'; 
+import { Logo } from '@/components/ui/Logo'; // <--- Import the new component
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -28,21 +28,16 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
       )}>
         
         {/* App Header */}
-        <div className="flex flex-col items-center space-y-2 text-center mb-8">
-        
-          <div className="h-12 w-12 bg-primary-500 rounded-2xl flex items-center justify-center text-white mb-2 transition-transform hover:scale-105 shadow-md shadow-primary-500/20">
-            <Droplet size={28} fill="currentColor" />
-          </div>
-          <h1 className="text-xl font-bold tracking-tight text-gray-900">
-            Glucolens
-          </h1>
+        <div className="flex flex-col items-center justify-center mb-8">
+          {/* Replaced hardcoded logo with component */}
+          <Logo layout="vertical" linkTo={null} />
         </div>
 
         {children}
         
         {/* Footer */}
         <div className="text-center text-xs text-gray-400 mt-8">
-          <p>© 2026 Glucolens. All rights reserved.</p>
+          <p>© 2026 Glucolens. Secure Medical Platform.</p>
         </div>
 
       </div>
