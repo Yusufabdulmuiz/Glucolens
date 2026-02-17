@@ -4,7 +4,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 // TRANSLATION RESOURCES (The Dictionary)
 const resources = {
-  // 1. English (Default)
+  // 1. English (Default) 
   en: {
     translation: {
       "welcome": "Welcome back!",
