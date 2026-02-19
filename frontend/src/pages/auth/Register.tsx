@@ -15,7 +15,8 @@ import { type AuthResponse } from '@/types/auth';
 // Components
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { AuthLayout } from '@/layouts/AuthLayout';
+import { AuthLayout } from '@/components/layout/AuthLayout';
+
 
 /**
  * Register Page Component
