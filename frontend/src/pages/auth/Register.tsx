@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import { User, Mail, Phone, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 // Stores & Services
 import { useAuthStore } from '@/store/authStore';
@@ -13,14 +15,20 @@ import { type AuthResponse } from '@/types/auth';
 // Components
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { AuthLayout } from '@/components/layout/AuthLayout';
+import { AuthLayout } from '@/layouts/AuthLayout';
 
 /**
  * Register Page Component
- * Handles new user registration and auto-login.
+ * Handles new user registration, notification consents, and auto-login.
  */
 const Register = () => {
+  const { t } = useTranslation();
   const [serverError, setServerError] = useState<string | null>(null);
+  
+  // UI State for Password Visibility
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
 
@@ -41,11 +49,15 @@ const Register = () => {
 
     try {
       // 1. Type-Safe API Call
-      // The Mock Adapter (or real backend) will return the User + Token
       const response = await api.post<AuthResponse>('/auth/register', {
         full_name: data.fullName,
         email: data.email,
-        password: data.password
+        phone_number: data.phoneNumber, 
+        password: data.password,
+        consents: { 
+          email: data.emailReminders || false, 
+          sms: data.smsReminders || false 
+        }
       });
 
       // 2. Validate Response Data
@@ -56,7 +68,6 @@ const Register = () => {
       }
 
       // 3. Auto-Login & Redirect
-      // We immediately log the user in with the token we just received
       login(user, access_token);
       console.log('[Register] Success. Auto-logging in...');
       navigate('/dashboard');
@@ -66,7 +77,6 @@ const Register = () => {
 
       // 4. Professional Error Handling
       if (axios.isAxiosError(err)) {
-        // Handle 409 Conflict (Email exists) or 400 Bad Request
         const message = err.response?.data?.message || 'Registration failed. Please try again.';
         setServerError(message);
       } else if (err instanceof Error) {
@@ -79,67 +89,145 @@ const Register = () => {
 
   return (
     <AuthLayout>
-      <div className="flex flex-col space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Create an account</h1>
-        <p className="text-sm text-gray-500">
-          Enter your details to get started with Glucolens
+      {/* HEADER SECTION */}
+      <div className="flex flex-col space-y-2 text-center mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          {t('reg_title')}
+        </h1>
+        <p className="text-sm text-gray-500 max-w-[280px] mx-auto">
+          {t('reg_subtitle')}
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {/* Server Error Alert */}
         {serverError && (
-          <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md flex items-center gap-2">
-            <span className="font-bold">Error:</span> {serverError}
+          <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 animate-in fade-in">
+            <AlertCircle size={16} className="shrink-0" />
+            <span className="font-medium">{serverError}</span>
           </div>
         )}
 
+        {/* INPUT FIELDS */}
         <div className="space-y-4">
           <Input
-            label="Full Name"
-            placeholder="Jean Pierre"
+            label={t('reg_username')}
+            icon={<User size={18} className="text-gray-400" />}
+            placeholder="Enter your username"
             error={errors.fullName?.message}
             {...register('fullName')}
           />
+          
           <Input
-            label="Email"
+            label={t('reg_email')}
             type="email"
-            placeholder="name@example.com"
+            icon={<Mail size={18} className="text-gray-400" />}
+            placeholder="yourname@gmail.com"
             error={errors.email?.message}
             {...register('email')}
           />
+
           <Input
-            label="Password"
-            type="password"
-            placeholder="••••••••"
+            label={t('reg_phone')}
+            type="tel"
+            icon={<Phone size={18} className="text-gray-400" />}
+            placeholder="+1 (555) 000-0000"
+            error={errors.phoneNumber?.message}
+            {...register('phoneNumber')}
+          />
+
+          <Input
+            label={t('reg_password')}
+            type={showPassword ? 'text' : 'password'}
+            icon={<Lock size={18} className="text-gray-400" />}
+            placeholder="Enter your password"
             error={errors.password?.message}
+            rightElement={
+              <button 
+                type="button" 
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            }
             {...register('password')}
           />
+
           <Input
-            label="Confirm Password"
-            type="password"
-            placeholder="••••••••"
+            label={t('reg_confirm')}
+            type={showConfirmPassword ? 'text' : 'password'}
+            icon={<Lock size={18} className="text-gray-400" />}
+            placeholder="Confirm your password"
             error={errors.confirmPassword?.message}
+            rightElement={
+              <button 
+                type="button" 
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            }
             {...register('confirmPassword')}
           />
         </div>
 
+        {/* CONSENT CHECKBOXES */}
+        <div className="space-y-3 pt-2">
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <div className="flex items-center h-5 mt-0.5">
+              <input 
+                type="checkbox" 
+                className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 transition-colors"
+                {...register('emailReminders')}
+              />
+            </div>
+            <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors leading-snug">
+              {t('reg_email_consent')}
+            </span>
+          </label>
+
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <div className="flex items-center h-5 mt-0.5">
+              <input 
+                type="checkbox" 
+                className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 transition-colors"
+                {...register('smsReminders')}
+              />
+            </div>
+            <span className="text-sm text-gray-600 group-hover:text-gray-900 transition-colors leading-snug">
+              {t('reg_sms_consent')}
+            </span>
+          </label>
+        </div>
+
+        {/* AI DISCLAIMER BOX */}
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 items-start mt-6">
+          <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
+          <p className="text-[13px] leading-relaxed text-amber-800 font-medium">
+            {t('reg_ai_warning')}
+          </p>
+        </div>
+
+        {/* SUBMIT BUTTON */}
         <Button 
           type="submit" 
-          className="w-full" 
+          className="w-full mt-6 py-2.5 text-base font-medium shadow-soft" 
           isLoading={isSubmitting}
         >
-          Create Account
+          {t('reg_submit')}
         </Button>
       </form>
 
-      <div className="mt-6 text-center text-sm">
-        <span className="text-gray-500">Already have an account? </span>
+      {/* FOOTER LINK */}
+      <div className="mt-8 text-center text-sm">
+        <span className="text-gray-500">{t('reg_have_account')} </span>
         <Link 
           to="/auth/login" 
-          className="font-medium text-primary-600 hover:text-primary-500 hover:underline transition-colors"
+          className="font-semibold text-primary-600 hover:text-primary-700 transition-colors"
         >
-          Sign in
+          {t('reg_login_link')}
         </Link>
       </div>
     </AuthLayout>
@@ -147,3 +235,4 @@ const Register = () => {
 };
 
 export default Register;
+    
