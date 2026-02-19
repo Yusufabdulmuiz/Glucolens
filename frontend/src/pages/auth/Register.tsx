@@ -48,17 +48,19 @@ const Register = () => {
   const onSubmit = async (data: RegisterFormData) => {
     setServerError(null);
 
-    try {
+      try {
       // 1. Type-Safe API Call
       const response = await api.post<AuthResponse>('/auth/register', {
         full_name: data.fullName,
         email: data.email,
-        phone_number: data.phoneNumber, 
         password: data.password,
-        consents: { 
-          email: data.emailReminders || false, 
-          sms: data.smsReminders || false 
-        }
+        
+        //  HIDDEN FROM MOCK YET:
+        // phone_number: data.phoneNumber, 
+        // consents: { 
+        //   email: data.emailReminders || false, 
+        //   sms: data.smsReminders || false 
+        // }
       });
 
       // 2. Validate Response Data
