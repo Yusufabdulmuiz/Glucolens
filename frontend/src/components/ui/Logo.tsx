@@ -31,7 +31,7 @@ export const Logo = ({
         "font-bold tracking-tight text-gray-900",
         isVertical ? "text-xl" : "text-lg"
       )}>
-        Glucolens
+        GlucoLens
       </span>
     </>
   );
