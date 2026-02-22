@@ -1,26 +1,48 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
-// 1. Define the Shape of the Data
 export interface AssessmentData {
-  // Step 1: Anthropometrics
+  // --- Step 1: Basic Info & Health History ---
+  fullName: string;
   age: number | '';
   gender: 'male' | 'female' | 'other' | '';
   height: number | ''; // cm
   weight: number | ''; // kg
   waistCircumference: number | ''; // cm
-  hipCircumference: number | ''; // cm
+  armCircumference: number | ''; // cm
   
-  // Step 2: Lifestyle
-  activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | '';
+  familyHistory: boolean | null;
+  familyCondition: string; 
+  familyRelationship: 'Parent' | 'Sibling' | 'Grandparent' | 'Other' | '';
+  
+  hasDiabetes: boolean | null;
+  diabetesType: string;
+  
+  otherConditions: string;
+  currentMedication: string;
+  
+  // --- Step 2: Lifestyle ---
+  educationLevel: 'primary' | 'secondary' | 'college' | 'postgraduate' | '';
+  socialLife: 'very_active' | 'moderate' | 'limited' | '';
+  activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active' | '';
   sleepHours: number | '';
-  familyHistory: boolean;
+  smoking: 'never' | 'occasionally' | 'yes' | '';
+  alcohol: 'never' | 'occasionally' | 'regularly' | '';
   
-  // Step 3: Physical Signs (Images)
-  signsImage: File | null;
+  // --- Step 3: Physical Signs ---
+  acanthosisNigricans: boolean | null;
+  acanthosisImage: File | null;
+  skinTags: boolean | null;
+  skinTagsImage: File | null;
   
-  // Step 4 & 5: Lab & Genomic (Optional)
+  // --- Step 4: Lab Results ---
   labFile: File | null;
+  fastingGlucose: number | '';
+  totalCholesterol: number | '';
+  hba1c: number | '';
+  systolicBP: number | '';
+  
+  // --- Step 5: Genomic Data ---
   genomicFile: File | null;
 }
 
@@ -28,8 +50,6 @@ interface AssessmentState {
   currentStep: number;
   totalSteps: number;
   data: AssessmentData;
-
-  // Actions
   setStep: (step: number) => void;
   nextStep: () => void;
   prevStep: () => void;
@@ -38,9 +58,13 @@ interface AssessmentState {
 }
 
 const INITIAL_DATA: AssessmentData = {
-  age: '', gender: '', height: '', weight: '', waistCircumference: '', hipCircumference: '',
-  activityLevel: '', sleepHours: '', familyHistory: false,
-  signsImage: null, labFile: null, genomicFile: null
+  fullName: '', age: '', gender: '', height: '', weight: '', waistCircumference: '', armCircumference: '',
+  familyHistory: null, familyCondition: '', familyRelationship: '',
+  hasDiabetes: null, diabetesType: '', otherConditions: '', currentMedication: '',
+  educationLevel: '', socialLife: '', activityLevel: '', sleepHours: 7, smoking: '', alcohol: '',
+  acanthosisNigricans: null, acanthosisImage: null, skinTags: null, skinTagsImage: null,
+  labFile: null, fastingGlucose: '', totalCholesterol: '', hba1c: '', systolicBP: '',
+  genomicFile: null
 };
 
 export const useAssessmentStore = create<AssessmentState>()(
@@ -49,35 +73,21 @@ export const useAssessmentStore = create<AssessmentState>()(
       currentStep: 1,
       totalSteps: 5,
       data: INITIAL_DATA,
-
       setStep: (step) => set({ currentStep: step }),
-      
-      nextStep: () => set((state) => ({ 
-        currentStep: Math.min(state.currentStep + 1, state.totalSteps) 
-      })),
-      
-      prevStep: () => set((state) => ({ 
-        currentStep: Math.max(state.currentStep - 1, 1) 
-      })),
-      
-      updateData: (fields) => set((state) => ({ 
-        data: { ...state.data, ...fields } 
-      })),
-      
-      resetAssessment: () => set({ 
-        currentStep: 1, 
-        data: INITIAL_DATA 
-      })
+      nextStep: () => set((state) => ({ currentStep: Math.min(state.currentStep + 1, state.totalSteps) })),
+      prevStep: () => set((state) => ({ currentStep: Math.max(state.currentStep - 1, 1) })),
+      updateData: (fields) => set((state) => ({ data: { ...state.data, ...fields } })),
+      resetAssessment: () => set({ currentStep: 1, data: INITIAL_DATA })
     }),
     {
-      name: 'glucolens-assessment-storage', // Key name in storage
-      storage: createJSONStorage(() => sessionStorage), // Uses session storage
-      // Omit non-serializable File objects from persistence to prevent crashes
+      name: 'glucolens-assessment-storage',
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
         ...state,
         data: {
           ...state.data,
-          signsImage: null,
+          acanthosisImage: null,
+          skinTagsImage: null,
           labFile: null,
           genomicFile: null
         }

@@ -2,40 +2,70 @@ import { useForm } from 'react-hook-form';
 import { useAssessmentStore } from '@/store/assessmentStore';
 import { WizardLayout } from '../WizardLayout';
 import { Button } from '@/components/ui/Button';
-import { Activity, Moon, Users, Check } from 'lucide-react';
+import { Activity, Moon, BookOpen, Users, Flame, Wine } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Step2Form {
-  activityLevel: 'sedentary' | 'light' | 'moderate' | 'active';
+  educationLevel: 'primary' | 'secondary' | 'college' | 'postgraduate' | '';
+  socialLife: 'very_active' | 'moderate' | 'limited' | '';
+  activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active' | '';
   sleepHours: number;
-  familyHistory: boolean;
+  smoking: 'never' | 'occasionally' | 'yes' | '';
+  alcohol: 'never' | 'occasionally' | 'regularly' | '';
 }
 
 export default function Step2Lifestyle() {
   const { data, updateData, nextStep, prevStep } = useAssessmentStore();
   
-  const { handleSubmit, setValue, watch, formState: { errors } } = useForm<Step2Form>({
+const { handleSubmit, setValue, watch } = useForm<Step2Form>({
     defaultValues: {
-      activityLevel: data.activityLevel || undefined,
-      sleepHours: data.sleepHours || 7, // Default to 7 for the slider
-      familyHistory: data.familyHistory
+      educationLevel: data.educationLevel,
+      socialLife: data.socialLife,
+      activityLevel: data.activityLevel,
+      sleepHours: data.sleepHours === '' ? 7 : data.sleepHours,
+      smoking: data.smoking,
+      alcohol: data.alcohol
     }
   });
 
+  const educationLevel = watch('educationLevel');
+  const socialLife = watch('socialLife');
   const activityLevel = watch('activityLevel');
   const sleepHours = watch('sleepHours');
-  const familyHistory = watch('familyHistory');
+  const smoking = watch('smoking');
+  const alcohol = watch('alcohol');
 
   const onSubmit = (formData: Step2Form) => {
     updateData(formData);
+    // Note: We will wire this to assessmentService.submitLifestyle in the final API pass!
     nextStep();
   };
 
+  // UX Options Mapped
+  const educationOptions = [
+    { value: 'primary', label: 'Primary School' },
+    { value: 'secondary', label: 'Secondary School' },
+    { value: 'college', label: 'College/University' },
+    { value: 'postgraduate', label: 'Postgraduate' },
+  ] as const;
+
+  const socialOptions = [
+    { value: 'very_active', label: 'Very Active' },
+    { value: 'moderate', label: 'Moderate' },
+    { value: 'limited', label: 'Limited' },
+  ] as const;
+
   const activityOptions = [
-    { value: 'sedentary', label: 'Sedentary', desc: 'Little to no exercise' },
-    { value: 'light', label: 'Light', desc: '1-2 days per week' },
-    { value: 'moderate', label: 'Moderate', desc: '3-5 days per week' },
-    { value: 'active', label: 'Active', desc: '6-7 days per week' },
+    { value: 'sedentary', label: 'Sedentary' },
+    { value: 'light', label: 'Light Activity' },
+    { value: 'moderate', label: 'Moderate' },
+    { value: 'active', label: 'Active' },
+    { value: 'very_active', label: 'Very Active' },
+  ] as const;
+
+  const habitOptions = [
+    { value: 'never', label: 'Never' },
+    { value: 'occasionally', label: 'Occasionally' },
   ] as const;
 
   return (
@@ -43,102 +73,141 @@ export default function Step2Lifestyle() {
       title="Lifestyle Information" 
       description="Help us understand your daily habits and lifestyle."
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
         
-        {/* Activity Level */}
-        <div>
-          <label className="flex items-center gap-2 text-foreground font-medium mb-3">
-            <Activity className="w-5 h-5 text-primary" />
-            Daily Physical Activity
-          </label>
-          <div className="space-y-2">
-            {activityOptions.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setValue('activityLevel', option.value, { shouldValidate: true })}
-                className={cn(
-                  "w-full text-left py-3 px-4 rounded-lg border-2 transition-all",
-                  activityLevel === option.value
-                    ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                    : "border-input hover:border-ring bg-background"
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className={cn("font-medium", activityLevel === option.value ? "text-primary" : "text-foreground")}>
-                      {option.label}
-                    </div>
-                    <div className="text-muted-foreground text-sm">{option.desc}</div>
-                  </div>
-                  {activityLevel === option.value && (
-                    <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                      <div className="w-2 h-2 rounded-full bg-primary-foreground" />
-                    </div>
-                  )}
-                </div>
-              </button>
-            ))}
+        {/* -- SECTION 1: Socioeconomic -- */}
+        <div className="space-y-6">
+          
+          {/* Education Level */}
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-foreground font-medium">
+              <BookOpen className="w-5 h-5 text-primary" />
+              Education Level
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {educationOptions.map((opt) => (
+                <button
+                  key={opt.value} type="button"
+                  onClick={() => setValue('educationLevel', opt.value as any, { shouldValidate: true })}
+                  className={cn("py-3 px-4 rounded-lg border-2 text-sm font-medium transition-all text-center", educationLevel === opt.value ? "border-primary bg-primary/10 text-primary" : "border-input bg-background text-foreground hover:border-primary/50")}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
-          {errors.activityLevel && <p className="text-xs text-destructive mt-2">Please select an activity level</p>}
-        </div>
 
-        {/* Sleep Slider */}
-        <div>
-          <label className="flex items-center gap-2 text-foreground font-medium mb-3">
-            <Moon className="w-5 h-5 text-primary" />
-            Average Sleep (hours per night)
-          </label>
-          <div className="flex items-center gap-4">
-            <input
-              type="range"
-              min="4"
-              max="12"
-              step="0.5"
-              value={sleepHours}
-              onChange={(e) => setValue('sleepHours', parseFloat(e.target.value))}
-              className="flex-1 accent-primary"
-            />
-            <div className="bg-input-background px-4 py-2 rounded-lg min-w-[80px] text-center border border-input">
-              <span className="text-foreground font-medium">{sleepHours} hrs</span>
+          {/* Social Life */}
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-foreground font-medium">
+              <Users className="w-5 h-5 text-primary" />
+              Social Life
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {socialOptions.map((opt) => (
+                <button
+                  key={opt.value} type="button"
+                  onClick={() => setValue('socialLife', opt.value as any, { shouldValidate: true })}
+                  className={cn("py-3 px-2 rounded-lg border-2 text-sm font-medium transition-all text-center", socialLife === opt.value ? "border-primary bg-primary/10 text-primary" : "border-input bg-background text-foreground hover:border-primary/50")}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Family History */}
-        <div>
-          <label className="flex items-center gap-2 text-foreground font-medium mb-3">
-            <Users className="w-5 h-5 text-primary" />
-            Family history of diabetes?
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setValue('familyHistory', true)}
-              className={cn(
-                "py-3 px-4 rounded-lg border-2 transition-all flex items-center justify-center gap-2 font-medium",
-                familyHistory === true
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-input bg-background text-foreground hover:border-ring"
-              )}
-            >
-              {familyHistory === true && <Check className="w-4 h-4" />} Yes
-            </button>
-            <button
-              type="button"
-              onClick={() => setValue('familyHistory', false)}
-              className={cn(
-                "py-3 px-4 rounded-lg border-2 transition-all font-medium",
-                familyHistory === false
-                  ? "border-input bg-background text-foreground ring-1 ring-ring/50"
-                  : "border-input bg-background text-foreground hover:border-ring"
-              )}
-            >
-              No
-            </button>
+        {/* -- SECTION 2: Physical & Sleep -- */}
+        <div className="space-y-6">
+          
+          {/* Activity Level */}
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-foreground font-medium">
+              <Activity className="w-5 h-5 text-primary" />
+              Daily Physical Activity
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {activityOptions.map((opt) => (
+                <button
+                  key={opt.value} type="button"
+                  onClick={() => setValue('activityLevel', opt.value as any, { shouldValidate: true })}
+                  className={cn("py-2 px-4 rounded-full border-2 text-sm font-medium transition-all", activityLevel === opt.value ? "border-primary bg-primary text-white" : "border-input bg-background text-foreground hover:border-primary/50")}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Sleep Slider */}
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-foreground font-medium">
+              <Moon className="w-5 h-5 text-primary" />
+              Sleep Hours (per night)
+            </label>
+            <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <span className="text-sm font-bold text-slate-400">4h</span>
+              <input
+                type="range"
+                min="4" max="12" step="0.5"
+                value={sleepHours}
+                onChange={(e) => setValue('sleepHours', parseFloat(e.target.value))}
+                className="flex-1 accent-primary"
+              />
+              <span className="text-sm font-bold text-slate-400">12h</span>
+              <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 min-w-[80px] text-center ml-4">
+                <span className="text-primary font-bold text-lg">{sleepHours}</span>
+                <span className="text-slate-500 text-sm ml-1">hrs</span>
+              </div>
+            </div>
           </div>
         </div>
 
+        {/* -- SECTION 3: Habits -- */}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Smoking */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-foreground font-medium">
+                <Flame className="w-5 h-5 text-orange-500" />
+                Do you smoke?
+              </label>
+              <div className="flex flex-col gap-2">
+                {[...habitOptions, { value: 'yes', label: 'Yes' }].map((opt) => (
+                  <button
+                    key={opt.value} type="button"
+                    onClick={() => setValue('smoking', opt.value as any, { shouldValidate: true })}
+                    className={cn("py-3 px-4 rounded-lg border-2 text-sm font-medium transition-all text-left", smoking === opt.value ? "border-primary bg-primary/10 text-primary" : "border-input bg-background text-foreground hover:border-primary/50")}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Alcohol */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-foreground font-medium">
+                <Wine className="w-5 h-5 text-purple-500" />
+                Alcohol consumption
+              </label>
+              <div className="flex flex-col gap-2">
+                {[...habitOptions, { value: 'regularly', label: 'Regularly' }].map((opt) => (
+                  <button
+                    key={opt.value} type="button"
+                    onClick={() => setValue('alcohol', opt.value as any, { shouldValidate: true })}
+                    className={cn("py-3 px-4 rounded-lg border-2 text-sm font-medium transition-all text-left", alcohol === opt.value ? "border-primary bg-primary/10 text-primary" : "border-input bg-background text-foreground hover:border-primary/50")}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Buttons */}
         <div className="flex justify-between pt-6 border-t border-border">
           <Button type="button" variant="ghost" onClick={prevStep}>Back</Button>
           <Button type="submit" size="lg" className="px-8">Next Step</Button>

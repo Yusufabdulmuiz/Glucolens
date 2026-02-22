@@ -1,124 +1,131 @@
-import { useState, useRef } from 'react';
+import { useForm } from 'react-hook-form';
 import { useAssessmentStore } from '@/store/assessmentStore';
 import { WizardLayout } from '../WizardLayout';
 import { Button } from '@/components/ui/Button';
-import { Upload, X, Check, Info } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { assessmentService } from '@/services/assessmentService';
-import { AnalysisScreen } from '../AnalysisScreen';
+import { UploadCloud, X, FileJson, Dna, Info } from 'lucide-react';
+
+interface Step5Form {
+  genomicFile: File | null;
+}
 
 export default function Step5Genomic() {
-  const navigate = useNavigate();
-  const { data, updateData, prevStep, resetAssessment } = useAssessmentStore();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { data, updateData, prevStep } = useAssessmentStore();
   
-  const [fileName, setFileName] = useState<string | null>(data.genomicFile ? data.genomicFile.name : null);
-  const [showAnalysis, setShowAnalysis] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showGeneInfo, setShowGeneInfo] = useState(false);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      updateData({ genomicFile: file });
-      setFileName(file.name);
+  const { handleSubmit, setValue, watch } = useForm<Step5Form>({
+    defaultValues: {
+      genomicFile: data.genomicFile
     }
+  });
+
+  const genomicFile = watch('genomicFile');
+
+  const onSubmit = (formData: Step5Form) => {
+    updateData(formData);
+    // Note: In our final API wiring, this is where we will call:
+    // 1. assessmentService.runPrediction()
+    // 2. navigate('/assessment/analysis')
+    console.log("Assessment Complete! Payload ready for Phase 2 API:", { ...data, ...formData });
+    alert("Phase 2 Frontend Engine Complete! Check console for the massive data payload.");
   };
 
-  const handleRemove = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    updateData({ genomicFile: null });
-    setFileName(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+  const handleSkip = () => {
+    // If they skip, we submit the form as-is (with null for genomic file)
+    handleSubmit(onSubmit)();
   };
 
-  const handleFinish = async () => {
-    setIsSubmitting(true);
-    try {
-      await assessmentService.submitAssessment(data);
-      setShowAnalysis(true);
-    } catch (error) {
-      console.error("Submission failed", error);
-      alert("Failed to submit assessment. Please try again.");
-      setIsSubmitting(false);
-    }
+  const handleFileChange = (file: File | null) => {
+    setValue('genomicFile', file, { shouldValidate: true });
   };
 
-  const handleAnalysisComplete = () => {
-    resetAssessment();
-    navigate('/dashboard'); 
-  };
-
-  if (showAnalysis) return <AnalysisScreen onComplete={handleAnalysisComplete} />;
-
-  const supportedGenes = ['TCF7L2 (rs7903146)', 'KCNJ11 (rs5219)', 'PPARG (Pro12Ala)', 'APOL1 (G1/G2)'];
+  const supportedGenes = [
+    "TCF7L2 (rs7903146)", "APOL1 (G1/G2 variants)", "APO1 variants", 
+    "G6PD (rs1050878-T)", "KCNJ11 (rs5219, E23K)", "ABCC8 (C49620T)", 
+    "HRANB3 / ZRANB3", "PPARG (Pro12Ala)", "ACE (I/D polymorphism)", "VEGF (rs3025039)"
+  ];
 
   return (
     <WizardLayout 
       title="Genomic Data" 
-      description="Upload raw DNA data (e.g., 23andMe) for precise genetic risk profiling."
+      description="You can upload any of the following genes to enhance the precision of your diabetes risk prediction."
     >
-      <div className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         
-        <div className="bg-background border border-border rounded-xl p-6">
-          <h4 className="text-foreground font-medium mb-3">Supported Genes for Analysis</h4>
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            {supportedGenes.map((gene) => (
-              <div key={gene} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-input-background border border-input text-muted-foreground text-sm">
-                <span>{gene}</span>
+        {/* --- SECTION 1: Educational Medical Box --- */}
+        <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-5 space-y-4">
+          <div className="flex items-center gap-2 border-b border-indigo-100 pb-3">
+            <Dna className="w-5 h-5 text-indigo-600" />
+            <h3 className="font-semibold text-indigo-900">Supported Genes for Upload</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {supportedGenes.map((gene, idx) => (
+              <div key={idx} className="flex items-center gap-2 text-sm text-indigo-800">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                {gene}
               </div>
             ))}
           </div>
-          <button onClick={() => setShowGeneInfo(!showGeneInfo)} className="flex items-center gap-2 text-sm text-[#d4183d] hover:underline">
-            <Info className="w-4 h-4" /> Why do these genes matter?
+
+          <button type="button" className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors pt-2 mt-2 border-t border-indigo-100/50 w-full">
+            <Info className="w-4 h-4" />
+            Why do these genes matter?
           </button>
+        </div>
+
+        {/* --- SECTION 2: File Upload --- */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-foreground">Upload Genomic File</h3>
           
-          {showGeneInfo && (
-             <div className="mt-4 p-4 bg-muted rounded-lg text-sm text-muted-foreground">
-               These variants are heavily associated with insulin response, beta-cell function, and metabolic regulation.
-             </div>
+          {!genomicFile ? (
+            <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-primary/30 rounded-xl cursor-pointer bg-primary/5 hover:bg-primary/10 transition-all group">
+              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
+                  <UploadCloud className="w-6 h-6 text-primary" />
+                </div>
+                <p className="text-base font-medium text-foreground mb-1">Click to upload genomic data</p>
+                <p className="text-sm text-muted-foreground">Accepted formats: .vcf, .txt, .json</p>
+              </div>
+              <input 
+                type="file" 
+                accept=".vcf,.txt,.json,application/json,text/plain" 
+                className="hidden" 
+                onChange={(e) => handleFileChange(e.target.files?.[0] || null)} 
+              />
+            </label>
+          ) : (
+            <div className="flex items-center justify-between p-4 border-2 border-primary bg-primary/5 rounded-xl animate-in fade-in zoom-in-95 duration-300">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                  <FileJson className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground truncate max-w-[200px] md:max-w-xs">{genomicFile.name}</p>
+                  <p className="text-xs text-muted-foreground">{(genomicFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                </div>
+              </div>
+              <Button type="button" variant="ghost" size="icon" onClick={() => handleFileChange(null)} className="text-destructive hover:bg-destructive/10 hover:text-destructive">
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
           )}
         </div>
 
-        <div 
-          onClick={() => fileInputRef.current?.click()}
-          className="cursor-pointer border-2 border-dashed border-[#d4183d]/30 rounded-xl p-8 text-center hover:border-[#d4183d]/60 transition-colors bg-background"
-        >
-          <input ref={fileInputRef} type="file" accept=".txt,.csv,.vcf" className="hidden" onChange={handleFileChange} />
-          
-          <div className="flex flex-col items-center gap-3">
-            <div className="bg-[#d4183d]/10 p-4 rounded-full">
-              <Upload className="w-8 h-8 text-[#d4183d]" />
-            </div>
-            <div>
-              <p className="text-foreground font-medium mb-1">Upload Genomic File</p>
-              <p className="text-muted-foreground text-sm">Accepted formats: .vcf, .txt, .csv</p>
-            </div>
-            
-            {fileName && (
-              <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 mt-4 w-full max-w-xs animate-in fade-in">
-                <div className="flex items-center justify-center gap-2 text-green-700 font-medium mb-1">
-                  <Check className="w-4 h-4" /> Ready for Analysis
-                </div>
-                <div className="flex items-center justify-center gap-2 text-sm text-green-600 truncate">
-                  {fileName}
-                  <button onClick={handleRemove} className="ml-2 hover:text-green-800"><X className="w-4 h-4" /></button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
+        {/* --- NAVIGATION --- */}
         <div className="flex justify-between items-center pt-6 border-t border-border">
-          <Button variant="ghost" onClick={prevStep} disabled={isSubmitting}>Back</Button>
+          <Button type="button" variant="ghost" onClick={prevStep}>Previous</Button>
+          
           <div className="flex gap-3">
-            {!fileName && <Button variant="ghost" onClick={handleFinish} disabled={isSubmitting} className="text-muted-foreground">Skip & Finish</Button>}
-            <Button onClick={handleFinish} size="lg" className="px-8" isLoading={isSubmitting}>
-              {fileName ? "Analyze Data" : "Finish Assessment"}
+            {!genomicFile && (
+              <Button type="button" variant="outline" onClick={handleSkip}>
+                Skip this step
+              </Button>
+            )}
+            <Button type="submit" size="lg" className="px-8 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white shadow-lg shadow-indigo-500/30">
+              {genomicFile ? 'Complete Assessment' : 'Complete Without Genomics'}
             </Button>
           </div>
         </div>
-      </div>
+      </form>
     </WizardLayout>
   );
 }
