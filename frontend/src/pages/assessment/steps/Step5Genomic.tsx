@@ -1,15 +1,21 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { useAssessmentStore } from '@/store/assessmentStore';
+import { assessmentService } from '@/services/assessmentService';
 import { WizardLayout } from '../WizardLayout';
 import { Button } from '@/components/ui/Button';
 import { UploadCloud, X, FileJson, Dna, Info } from 'lucide-react';
+import { AnalysisScreen } from '../AnalysisScreen'; // Import the existing screen
 
 interface Step5Form {
   genomicFile: File | null;
 }
 
 export default function Step5Genomic() {
-  const { data, updateData, prevStep } = useAssessmentStore();
+  const { data, updateData, prevStep, resetAssessment } = useAssessmentStore();
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const navigate = useNavigate();
   
   const { handleSubmit, setValue, watch } = useForm<Step5Form>({
     defaultValues: {
@@ -19,17 +25,30 @@ export default function Step5Genomic() {
 
   const genomicFile = watch('genomicFile');
 
-  const onSubmit = (formData: Step5Form) => {
+  const onSubmit = async (formData: Step5Form) => {
+    // 1. Show the Analysis Overlay immediately
+    setIsAnalyzing(true);
+    
+    // 2. Save final step data to store
     updateData(formData);
-    // Note: In our final API wiring, this is where we will call:
-    // 1. assessmentService.runPrediction()
-    // 2. navigate('/assessment/analysis')
-    console.log("Assessment Complete! Payload ready for Phase 2 API:", { ...data, ...formData });
-    alert("Phase 2 Frontend Engine Complete! Check console for the massive data payload.");
+    const fullPayload = { ...data, ...formData };
+
+    try {
+      // 3. Fire the API payload silently in the background while the animation plays
+      await assessmentService.runPrediction(fullPayload);
+    } catch (error) {
+      console.error("Failed to submit assessment:", error);
+    }
+  };
+
+  const handleAnalysisComplete = () => {
+    // 4. When the 8-second animation is totally done, route to dashboard
+    setIsAnalyzing(false);
+    resetAssessment(); // Clear the wizard state so it's fresh for next time
+    navigate('/dashboard'); 
   };
 
   const handleSkip = () => {
-    // If they skip, we submit the form as-is (with null for genomic file)
     handleSubmit(onSubmit)();
   };
 
@@ -43,6 +62,11 @@ export default function Step5Genomic() {
     "HRANB3 / ZRANB3", "PPARG (Pro12Ala)", "ACE (I/D polymorphism)", "VEGF (rs3025039)"
   ];
 
+  // If analyzing, completely take over the screen with the Analysis component
+  if (isAnalyzing) {
+    return <AnalysisScreen onComplete={handleAnalysisComplete} />;
+  }
+
   return (
     <WizardLayout 
       title="Genomic Data" 
@@ -50,13 +74,12 @@ export default function Step5Genomic() {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         
-        {/* --- SECTION 1: Educational Medical Box --- */}
+        {/* Educational Box */}
         <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-5 space-y-4">
           <div className="flex items-center gap-2 border-b border-indigo-100 pb-3">
             <Dna className="w-5 h-5 text-indigo-600" />
             <h3 className="font-semibold text-indigo-900">Supported Genes for Upload</h3>
           </div>
-          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {supportedGenes.map((gene, idx) => (
               <div key={idx} className="flex items-center gap-2 text-sm text-indigo-800">
@@ -65,14 +88,13 @@ export default function Step5Genomic() {
               </div>
             ))}
           </div>
-
           <button type="button" className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors pt-2 mt-2 border-t border-indigo-100/50 w-full">
             <Info className="w-4 h-4" />
             Why do these genes matter?
           </button>
         </div>
 
-        {/* --- SECTION 2: File Upload --- */}
+        {/* File Upload */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-foreground">Upload Genomic File</h3>
           
@@ -86,9 +108,7 @@ export default function Step5Genomic() {
                 <p className="text-sm text-muted-foreground">Accepted formats: .vcf, .txt, .json</p>
               </div>
               <input 
-                type="file" 
-                accept=".vcf,.txt,.json,application/json,text/plain" 
-                className="hidden" 
+                type="file" accept=".vcf,.txt,.json,application/json,text/plain" className="hidden" 
                 onChange={(e) => handleFileChange(e.target.files?.[0] || null)} 
               />
             </label>
@@ -110,7 +130,7 @@ export default function Step5Genomic() {
           )}
         </div>
 
-        {/* --- NAVIGATION --- */}
+        {/* Navigation */}
         <div className="flex justify-between items-center pt-6 border-t border-border">
           <Button type="button" variant="ghost" onClick={prevStep}>Previous</Button>
           
@@ -120,7 +140,11 @@ export default function Step5Genomic() {
                 Skip this step
               </Button>
             )}
-            <Button type="submit" size="lg" className="px-8 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white shadow-lg shadow-indigo-500/30">
+            <Button 
+              type="submit" 
+              size="lg" 
+              className="px-8 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white shadow-lg shadow-indigo-500/30"
+            >
               {genomicFile ? 'Complete Assessment' : 'Complete Without Genomics'}
             </Button>
           </div>
