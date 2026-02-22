@@ -2,8 +2,7 @@ import { useState, useRef } from 'react';
 import { useAssessmentStore } from '@/store/assessmentStore';
 import { WizardLayout } from '../WizardLayout';
 import { Button } from '@/components/ui/Button';
-import { Dna, Upload, X, CheckCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Upload, X, Check, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { assessmentService } from '@/services/assessmentService';
 import { AnalysisScreen } from '../AnalysisScreen';
@@ -13,13 +12,10 @@ export default function Step5Genomic() {
   const { data, updateData, prevStep, resetAssessment } = useAssessmentStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [fileName, setFileName] = useState<string | null>(
-    data.genomicFile ? data.genomicFile.name : null
-  );
-  
-  // State to control the "Visual Theater"
+  const [fileName, setFileName] = useState<string | null>(data.genomicFile ? data.genomicFile.name : null);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showGeneInfo, setShowGeneInfo] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,18 +32,11 @@ export default function Step5Genomic() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // 1. User clicks "Finish" -> Submit Data -> Trigger Animation
   const handleFinish = async () => {
     setIsSubmitting(true);
-    
     try {
-      // Real (or Mock) submission happens first
       await assessmentService.submitAssessment(data);
-      console.log("Assessment Data Uploaded. Starting Simulation...");
-      
-      // Instead of redirecting immediately, show the analysis screen
       setShowAnalysis(true);
-      
     } catch (error) {
       console.error("Submission failed", error);
       alert("Failed to submit assessment. Please try again.");
@@ -55,86 +44,75 @@ export default function Step5Genomic() {
     }
   };
 
-  // 2. Animation calls this when it hits 100%
   const handleAnalysisComplete = () => {
     resetAssessment();
     navigate('/dashboard'); 
   };
 
-  // 3. Render the Analysis Screen Overlay if active
-  if (showAnalysis) {
-    return <AnalysisScreen onComplete={handleAnalysisComplete} />;
-  }
+  if (showAnalysis) return <AnalysisScreen onComplete={handleAnalysisComplete} />;
 
-  // Standard Render
+  const supportedGenes = ['TCF7L2 (rs7903146)', 'KCNJ11 (rs5219)', 'PPARG (Pro12Ala)', 'APOL1 (G1/G2)'];
+
   return (
     <WizardLayout 
       title="Genomic Data" 
-      description="Optional: Upload raw DNA data (e.g., 23andMe) for genetic risk profiling."
+      description="Upload raw DNA data (e.g., 23andMe) for precise genetic risk profiling."
     >
-      <div className="space-y-8">
+      <div className="space-y-6">
         
-        {/* Upload Box */}
-        <div 
-          onClick={() => fileInputRef.current?.click()}
-          className={cn(
-            "cursor-pointer relative w-full h-48 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all",
-            fileName 
-              ? "border-purple-500 bg-purple-50" 
-              : "border-gray-300 hover:border-purple-400 hover:bg-purple-50 bg-white"
-          )}
-        >
-          {fileName ? (
-            <div className="text-center p-4">
-              <div className="mx-auto h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center mb-3">
-                 <CheckCircle className="h-6 w-6 text-purple-600" />
+        <div className="bg-background border border-border rounded-xl p-6">
+          <h4 className="text-foreground font-medium mb-3">Supported Genes for Analysis</h4>
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            {supportedGenes.map((gene) => (
+              <div key={gene} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-input-background border border-input text-muted-foreground text-sm">
+                <span>{gene}</span>
               </div>
-              <p className="font-medium text-gray-900 truncate max-w-xs">{fileName}</p>
-              <p className="text-xs text-purple-700 mt-1">Ready for analysis</p>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="mt-4 text-red-500 hover:text-red-600 hover:bg-red-50"
-                onClick={handleRemove}
-              >
-                <X className="mr-2 h-4 w-4" /> Remove
-              </Button>
-            </div>
-          ) : (
-            <div className="text-center p-6">
-              <div className="mx-auto h-12 w-12 rounded-full bg-purple-50 flex items-center justify-center mb-4">
-                 <Dna className="h-6 w-6 text-purple-500" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Upload DNA Data</h3>
-              <p className="text-sm text-gray-500 mt-1 mb-4">TXT or CSV (23andMe / Ancestry format)</p>
-              <Button type="button" variant="outline" size="sm">
-                 <Upload className="mr-2 h-4 w-4" /> Browse Files
-              </Button>
-            </div>
+            ))}
+          </div>
+          <button onClick={() => setShowGeneInfo(!showGeneInfo)} className="flex items-center gap-2 text-sm text-[#d4183d] hover:underline">
+            <Info className="w-4 h-4" /> Why do these genes matter?
+          </button>
+          
+          {showGeneInfo && (
+             <div className="mt-4 p-4 bg-muted rounded-lg text-sm text-muted-foreground">
+               These variants are heavily associated with insulin response, beta-cell function, and metabolic regulation.
+             </div>
           )}
-
-          <input 
-            ref={fileInputRef}
-            type="file" 
-            accept=".txt,.csv" 
-            className="hidden" 
-            onChange={handleFileChange}
-          />
         </div>
 
-        {/* Navigation - The Finish Line */}
-        <div className="flex justify-between items-center pt-6 border-t border-gray-100">
-          <Button variant="ghost" onClick={prevStep} disabled={isSubmitting}>
-            Back
-          </Button>
+        <div 
+          onClick={() => fileInputRef.current?.click()}
+          className="cursor-pointer border-2 border-dashed border-[#d4183d]/30 rounded-xl p-8 text-center hover:border-[#d4183d]/60 transition-colors bg-background"
+        >
+          <input ref={fileInputRef} type="file" accept=".txt,.csv,.vcf" className="hidden" onChange={handleFileChange} />
           
-          <div className="flex gap-3">
-            {!fileName && (
-              <Button variant="ghost" onClick={handleFinish} disabled={isSubmitting} className="text-gray-500">
-                Skip & Finish
-              </Button>
-            )}
+          <div className="flex flex-col items-center gap-3">
+            <div className="bg-[#d4183d]/10 p-4 rounded-full">
+              <Upload className="w-8 h-8 text-[#d4183d]" />
+            </div>
+            <div>
+              <p className="text-foreground font-medium mb-1">Upload Genomic File</p>
+              <p className="text-muted-foreground text-sm">Accepted formats: .vcf, .txt, .csv</p>
+            </div>
             
+            {fileName && (
+              <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 mt-4 w-full max-w-xs animate-in fade-in">
+                <div className="flex items-center justify-center gap-2 text-green-700 font-medium mb-1">
+                  <Check className="w-4 h-4" /> Ready for Analysis
+                </div>
+                <div className="flex items-center justify-center gap-2 text-sm text-green-600 truncate">
+                  {fileName}
+                  <button onClick={handleRemove} className="ml-2 hover:text-green-800"><X className="w-4 h-4" /></button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center pt-6 border-t border-border">
+          <Button variant="ghost" onClick={prevStep} disabled={isSubmitting}>Back</Button>
+          <div className="flex gap-3">
+            {!fileName && <Button variant="ghost" onClick={handleFinish} disabled={isSubmitting} className="text-muted-foreground">Skip & Finish</Button>}
             <Button onClick={handleFinish} size="lg" className="px-8" isLoading={isSubmitting}>
               {fileName ? "Analyze Data" : "Finish Assessment"}
             </Button>

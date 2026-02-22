@@ -1,159 +1,185 @@
 import { useEffect, useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/store/authStore';
+import { useAssessmentStore } from '@/store/assessmentStore';
+import { dashboardService, type DashboardStats, type GlucoseDataPoint } from '@/services/dashboardService';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { GlucoseChart } from '@/components/dashboard/GlucoseChart';
-import { Button } from '@/components/ui/Button';
-import { ArrowRight, Activity, TrendingUp, AlertCircle, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { dashboardService, type DashboardStats, type GlucoseDataPoint, type ActivityItem } from '@/services/dashboardService';
+import { Card, CardContent } from '@/components/ui/Card';
+import { Progress } from '@/components/ui/Progress';
+import { Badge } from '@/components/ui/Badge';
+import { Activity, Upload, TrendingUp, History, Droplet, Dna, Scale, Footprints, Ruler, Target, Loader2 } from 'lucide-react';
 
 export default function DashboardOverview() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const { data: assessmentData } = useAssessmentStore();
   
-  // State for all our data
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [chartData, setChartData] = useState<GlucoseDataPoint[]>([]);
-  const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  // Fetch Data on Mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setIsLoading(true);
-        // Run all requests in parallel for speed
-        const [statsData, historyData, activityData] = await Promise.all([
+        const [statsData, historyData] = await Promise.all([
           dashboardService.getStats(),
-          dashboardService.getGlucoseHistory(),
-          dashboardService.getRecentActivity()
+          dashboardService.getGlucoseHistory()
         ]);
-        
         setStats(statsData);
         setChartData(historyData);
-        setActivities(activityData);
-      } catch (err) {
-        console.error('Failed to load dashboard:', err);
-        setError('Failed to load dashboard data.');
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchData();
   }, []);
+
+  const fields = Object.values(assessmentData);
+  const completionPercentage = Math.round((fields.filter(v => v !== '' && v !== null && v !== false).length / fields.length) * 100);
+
+  const weight = Number(assessmentData.weight) || 0;
+  const height = Number(assessmentData.height) || 0;
+  const waist = Number(assessmentData.waistCircumference) || 0;
+  
+  const bmi = (weight > 0 && height > 0) ? (weight / Math.pow(height / 100, 2)) : 0;
+  const waistToHeightRatio = (waist > 0 && height > 0) ? (waist / height) : 0;
+  const activityLevel = assessmentData.activityLevel || 'Not Set';
+  
+  const currentRiskLevel = (stats?.riskScore || 0) > 70 ? 'high' : (stats?.riskScore || 0) > 40 ? 'medium' : 'low';
+
+  const quickActions = [
+    { title: 'Enter My Data', icon: Activity, desc: 'Add your health information', color: 'from-blue-500 to-blue-600', path: '/assessment' },
+    { title: 'Track Glucose', icon: Droplet, desc: 'Monitor your blood sugar levels', color: 'from-indigo-500 to-indigo-600', path: '/dashboard' },
+    { title: 'Upload Lab Results', icon: Upload, desc: 'Upload test reports', color: 'from-purple-500 to-purple-600', path: '/assessment', optional: true },
+    { title: 'Genomic Data', icon: Dna, desc: 'Optional precise prediction', color: 'from-teal-500 to-teal-600', path: '/assessment', optional: true },
+    { title: 'Past Assessments', icon: History, desc: 'View your history', color: 'from-orange-500 to-orange-600', path: '/settings' },
+    { title: 'Risk Score', icon: TrendingUp, desc: 'Check health status', color: 'from-green-500 to-green-600', path: '/dashboard' },
+  ];
 
   if (isLoading) {
     return (
       <AppLayout>
         <div className="flex h-[80vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </AppLayout>
     );
   }
 
-  if (error) {
-    return (
-       <AppLayout>
-         <div className="p-8 text-red-500">{error}</div>
-       </AppLayout>
-    );
-  }
-
   return (
     <AppLayout>
-      <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
         
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Health Overview</h1>
-            <p className="text-gray-500 mt-1">
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
-          </div>
-          <Button onClick={() => navigate('/assessment')}>
-            Start New Assessment <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
-        
-        {/* Top Metrics Grid */}
-        <div className="grid gap-4 md:grid-cols-3">
-           <Card>
-             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-               <CardTitle className="text-sm font-medium text-gray-500">Avg Glucose</CardTitle>
-               <Activity className="h-4 w-4 text-gray-400" />
-             </CardHeader>
-             <CardContent>
-               <div className="text-2xl font-bold">{stats?.avgGlucose} mg/dL</div>
-               <p className="text-xs text-green-600 font-medium mt-1">
-                  {stats?.glucoseChange && stats.glucoseChange < 0 ? '↓' : '↑'} {Math.abs(stats?.glucoseChange || 0)}% from last week
-               </p>
-             </CardContent>
-           </Card>
-
-           <Card>
-             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-               <CardTitle className="text-sm font-medium text-gray-500">Risk Score</CardTitle>
-               <AlertCircle className="h-4 w-4 text-gray-400" />
-             </CardHeader>
-             <CardContent>
-               <div className="text-2xl font-bold text-green-600">{stats?.riskScore}</div>
-               <p className="text-xs text-gray-500 mt-1">AI Confidence: {stats?.riskConfidence}%</p>
-             </CardContent>
-           </Card>
-
-           <Card>
-             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-               <CardTitle className="text-sm font-medium text-gray-500">HbA1c Projection</CardTitle>
-               <TrendingUp className="h-4 w-4 text-gray-400" />
-             </CardHeader>
-             <CardContent>
-               <div className="text-2xl font-bold">{stats?.hba1c}%</div>
-               <p className="text-xs text-gray-500 mt-1">Estimated based on logs</p>
-             </CardContent>
-           </Card>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+            Hi {user?.name || 'Guest'}! Let's check your health status today.
+          </h1>
+          <p className="text-muted-foreground">Your wellness journey continues here</p>
         </div>
 
-        {/* Main Content Split */}
-        <div className="grid md:grid-cols-7 gap-6">
-          
-          {/* Left Column: Chart */}
-          <Card className="md:col-span-4">
-            <CardHeader>
-              <CardTitle>Glucose Trends (24h)</CardTitle>
-            </CardHeader>
-            <CardContent className="pl-0">
-               {/* Pass the fetched data to the chart */}
-              <GlucoseChart data={chartData} />
-            </CardContent>
-          </Card>
-
-          {/* Right Column: Recent Activity */}
-          <Card className="md:col-span-3">
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {activities.map((item) => (
-                  <div key={item.id} className="flex items-center">
-                    <div className="ml-4 space-y-1">
-                      <p className="text-sm font-medium leading-none">{item.title}</p>
-                      <p className="text-sm text-gray-500">{item.desc}</p>
-                    </div>
-                    <div className="ml-auto font-medium text-xs text-gray-500">{item.time}</div>
-                  </div>
-                ))}
-                
-                {activities.length === 0 && (
-                   <p className="text-sm text-gray-400 text-center py-4">No recent activity</p>
-                )}
+        <Card>
+          <CardContent className="p-6 pt-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground mb-1">Profile Completion</h2>
+                <p className="text-sm text-muted-foreground">Your profile is {completionPercentage}% complete</p>
               </div>
-            </CardContent>
-          </Card>
+              <Badge level={currentRiskLevel} />
+            </div>
+            <Progress value={completionPercentage} />
+            {completionPercentage < 100 && (
+              <button onClick={() => navigate('/assessment')} className="mt-4 text-sm font-medium text-primary hover:underline">
+                Complete your profile →
+              </button>
+            )}
+          </CardContent>
+        </Card>
+
+        <div>
+          <h2 className="text-xl font-semibold text-foreground mb-4">Quick Stats</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <Card className="hover:shadow-md transition-all">
+              <CardContent className="p-5 pt-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Scale className="w-5 h-5 text-blue-600" />
+                  <h3 className="font-medium text-foreground">BMI Status</h3>
+                </div>
+                <div className="text-2xl font-bold text-foreground">{bmi > 0 ? bmi.toFixed(1) : '—'}</div>
+                <p className="text-muted-foreground text-xs mt-1">Calculated from Anthropometrics</p>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-all">
+              <CardContent className="p-5 pt-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Footprints className="w-5 h-5 text-purple-600" />
+                  <h3 className="font-medium text-foreground">Physical Activity</h3>
+                </div>
+                <div className="text-2xl font-bold text-foreground capitalize">{activityLevel}</div>
+                <p className="text-muted-foreground text-xs mt-1">Reported activity level</p>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-all">
+              <CardContent className="p-5 pt-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Ruler className="w-5 h-5 text-teal-600" />
+                  <h3 className="font-medium text-foreground">Waist-to-Height</h3>
+                </div>
+                <div className="text-2xl font-bold text-foreground">
+                  {waistToHeightRatio > 0 ? (waistToHeightRatio * 100).toFixed(1) + '%' : '—'}
+                </div>
+                <p className="text-muted-foreground text-xs mt-1">Central adiposity indicator</p>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-all">
+              <CardContent className="p-5 pt-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Target className="w-5 h-5 text-orange-600" />
+                  <h3 className="font-medium text-foreground">AI Risk Summary</h3>
+                </div>
+                <div className="text-2xl font-bold text-foreground">{stats?.avgGlucose || 0} mg/dL</div>
+                <p className="text-muted-foreground text-xs mt-1">Avg Glucose (24h) • Confidence: {stats?.riskConfidence || 0}%</p>
+              </CardContent>
+            </Card>
+
+          </div>
         </div>
+
+        <Card>
+          <CardContent className="p-6 pt-6">
+            <h2 className="text-xl font-semibold text-foreground mb-6">Glucose Trends (24h)</h2>
+            <div className="h-[300px] w-full">
+              <GlucoseChart data={chartData} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <div>
+          <h2 className="text-xl font-semibold text-foreground mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {quickActions.map((action, i) => (
+              <Card key={i} className="hover:shadow-md transition-all cursor-pointer" onClick={() => navigate(action.path)}>
+                <CardContent className="p-6 pt-6 flex items-start gap-4">
+                  <div className={`w-12 h-12 bg-gradient-to-br ${action.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                    <action.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-medium text-foreground">{action.title}</h3>
+                      {action.optional && <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] uppercase font-bold rounded-full">Optional</span>}
+                    </div>
+                    <p className="text-sm text-muted-foreground">{action.desc}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
       </div>
     </AppLayout>
   );

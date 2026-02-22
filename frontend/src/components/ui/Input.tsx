@@ -7,27 +7,27 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, ...props }, ref) => {
+  ({ className, label, error, type, ...props }, ref) => {
     return (
       <div className="w-full space-y-1">
         {label && (
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-foreground">
             {label}
           </label>
         )}
         <input
           ref={ref}
+          type={type}
           className={cn(
-            "w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors bg-white",
-            error 
-              ? "border-risk-high focus:ring-risk-high focus:border-risk-high text-risk-high placeholder:text-red-300" 
-              : "border-gray-300 focus:ring-primary-500 focus:border-primary-500 text-gray-900",
+            "flex h-9 w-full min-w-0 rounded-md border border-input bg-input-background px-3 py-1 text-base transition-[color,box-shadow] outline-none placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+            "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+            error && "border-destructive ring-destructive/20 focus-visible:ring-destructive/40",
             className
           )}
           {...props}
         />
         {error && (
-          <p className="text-xs text-risk-high font-medium">{error}</p>
+          <p className="text-xs text-destructive font-medium">{error}</p>
         )}
       </div>
     );

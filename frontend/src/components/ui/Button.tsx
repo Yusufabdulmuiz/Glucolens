@@ -2,7 +2,6 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// 1. Define the props, including the missing 'size'
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
   size?: 'default' | 'sm' | 'lg' | 'icon'; 
@@ -13,18 +12,18 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'default', isLoading, children, disabled, ...props }, ref) => {
     
     const variants = {
-      primary: "bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500 shadow-soft border-transparent",
-      secondary: "bg-white text-gray-700 border-gray-200 hover:bg-gray-50 focus:ring-gray-200 shadow-sm",
-      outline: "bg-transparent border-primary-500 text-primary-500 hover:bg-primary-50 focus:ring-primary-500",
-      ghost: "bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-100 border-transparent shadow-none",
-      destructive: "bg-risk-high text-white hover:bg-red-600 focus:ring-red-500 border-transparent shadow-soft",
+      primary: "bg-primary text-primary-foreground hover:bg-primary/90",
+      secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+      outline: "border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground",
+      ghost: "hover:bg-accent hover:text-accent-foreground",
+      destructive: "bg-destructive text-white hover:bg-destructive/90",
     };
 
     const sizes = {
-      default: "h-10 px-4 py-2",
+      default: "h-9 px-4 py-2",
       sm: "h-8 px-3 text-xs",
-      lg: "h-12 px-8 text-lg", 
-      icon: "h-10 w-10",
+      lg: "h-10 px-6", 
+      icon: "h-9 w-9",
     };
 
     return (
@@ -32,7 +31,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || isLoading}
         className={cn(
-          "inline-flex items-center justify-center rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 border disabled:opacity-50 disabled:cursor-not-allowed",
+          "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50",
           variants[variant],
           sizes[size],
           className
