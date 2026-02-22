@@ -2,151 +2,177 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import { useTranslation } from 'react-i18next';
+import { Eye, EyeOff } from 'lucide-react';
 
 // Stores & Services
 import { useAuthStore } from '@/store/authStore';
-import api from '@/services/api';
 import { loginSchema, type LoginFormData } from '@/lib/validation';
-import { type AuthResponse } from '@/types/auth';
 
 // Components
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { AuthLayout } from '@/components/layout/AuthLayout';
+import { LoadingScreen } from '@/components/ui/LoadingScreen';
 
 /**
  * Login Page Component
- * Handles user authentication and redirection.
+ * Handles user authentication and demo access.
  */
 const Login = () => {
-  // State for handling API errors (e.g., "Invalid password")
-  const [serverError, setServerError] = useState<string | null>(null);
-  
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const login = useAuthStore((state) => state.login);
+  
+  // State for UI controls
+  const [showLoader, setShowLoader] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  // Determine where to send the user after login (default to dashboard)
-  // This supports "Deep Linking" - if they tried to visit /settings but weren't logged in,
-  // we send them back to /settings after they login.
   const from = location.state?.from?.pathname || '/dashboard';
 
-  // Initialize React Hook Form with Zod Validation
+  // Initialize React Hook Form
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: ''
-    }
+    defaultValues: { email: '', password: '' }
   });
 
-  /**
-   * Handle Form Submission
-   * @param data - The validated form data (email, password) from Zod
-   */
+  // Handle Form Submission
   const onSubmit = async (data: LoginFormData) => {
     setServerError(null);
+    setShowLoader(true);
 
     try {
-      // 1. Type-Safe API Call
-      // We explicitly tell axios to expect an <AuthResponse> object.
-      // This ensures 'response.data' has autocomplete for 'access_token' and 'user'.
-      const response = await api.post<AuthResponse>('/auth/login', {
-        username: data.email, // Adjust payload key based on backend requirement
-        password: data.password
-      });
+      // Simulate network delay
+      await new Promise((resolve) => setTimeout(resolve, 3000));
 
-      // 2. Update Global Store
-      // We extract the user and token from the strictly typed response
-      const { user, access_token } = response.data;
+      const fakeUser = {
+        id: "1",
+        email: data.email, 
+        name: "Dr. Yusuf (Demo)",
+        role: "doctor",
+      };
       
-      if (!access_token || !user) {
-        throw new Error("Invalid response from server: Missing token or user data");
-      }
-
-      login(user, access_token);
-
-      // 3. Navigate
-      console.log(`[Login] Success. Redirecting to: ${from}`);
+      login(fakeUser, "mock-token-xyz");
       navigate(from, { replace: true });
 
-    } catch (err: unknown) {
-      console.error('[Login] Request Failed:', err);
-
-      // 4. Professional Error Handling
-      if (axios.isAxiosError(err)) {
-        // If the error comes from the server (e.g., 401 Unauthorized)
-        const message = err.response?.data?.message || 'Invalid email or password.';
-        setServerError(message);
-      } else if (err instanceof Error) {
-        // If it's a code error (e.g., parsing failed)
-        setServerError(err.message);
-      } else {
-        setServerError('An unexpected error occurred. Please try again.');
-      }
+    } catch (err) {
+      console.error(err);
+      setServerError(t('invalid_credentials') || "Invalid email or password");
+      setShowLoader(false);
     }
   };
 
+  // Immediate Dashboard Access for Demo
+  const handleDemoAccess = () => {
+    const demoUser = {
+      id: "demo-user",
+      email: "demo@glucolens.com",
+      name: "Dr. Demo User",
+      role: "doctor"
+    };
+    login(demoUser, "demo-token");
+    navigate('/dashboard', { replace: true });
+  };
+
   return (
-    <AuthLayout>
-      <div className="flex flex-col space-y-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
-        <p className="text-sm text-gray-500">
-          Enter your credentials to access your dashboard
-        </p>
-      </div>
+    <>
+      {showLoader && (
+        <LoadingScreen 
+          fullScreen={true} 
+          message={t('logging_in') || "Authenticating..."} 
+        />
+      )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-6">
-        {/* Global Server Error Alert */}
-        {serverError && (
-          <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md flex items-center gap-2">
-            <span className="font-bold">Error:</span> {serverError}
-          </div>
-        )}
-
-        <div className="space-y-4">
-          <Input
-            label="Email"
-            type="email"
-            placeholder="name@example.com"
-            error={errors.email?.message}
-            {...register('email')}
-            autoComplete="email"
-          />
-          <Input
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            error={errors.password?.message}
-            {...register('password')}
-            autoComplete="current-password"
-          />
+      <AuthLayout>
+        
+        <div className="text-center mb-6">
+          <p className="text-sm text-gray-500 font-medium">
+            {t('welcome')}
+          </p>
         </div>
 
-        <Button 
-          type="submit" 
-          className="w-full" 
-          isLoading={isSubmitting}
-        >
-          Sign in
-        </Button>
-      </form>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          {serverError && (
+            <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg text-center font-medium">
+              {serverError}
+            </div>
+          )}
+          
+          <Input
+            label={t('email_label')}
+            {...register('email')}
+            error={errors.email?.message}
+            placeholder="name@example.com"
+            className="h-11"
+            disabled={showLoader}
+          />
+          
+          <div className="relative">
+             <Input
+              label={t('password_label')}
+              type={showPassword ? "text" : "password"}
+              {...register('password')}
+              error={errors.password?.message}
+              placeholder="••••••••"
+              className="h-11 pr-10"
+              disabled={showLoader}
+            />
+            <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-[38px] text-gray-400 hover:text-gray-600"
+                disabled={showLoader}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+          </div>
 
-      <div className="mt-6 text-center text-sm">
-        <span className="text-gray-500">Don't have an account? </span>
-        <Link 
-          to="/auth/register" 
-          className="font-medium text-primary-600 hover:text-primary-500 hover:underline transition-colors"
-        >
-          Create an account
-        </Link>
-      </div>
-    </AuthLayout>
+          <Button 
+            type="submit" 
+            className="w-full bg-primary-500 hover:bg-primary-600 h-11 text-base shadow-lg shadow-primary-500/20"
+            isLoading={showLoader}
+            disabled={showLoader}
+          >
+            {t('login_button')}
+          </Button>
+
+          <div className="flex items-center justify-center">
+            <Link to="/forgot-password" className="text-sm font-semibold text-primary-600 hover:text-primary-700">
+              {t('forgot_password')}
+            </Link>
+          </div>
+
+           <div className="relative py-2">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-100"></div>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-400 font-medium">Or</span>
+              </div>
+            </div>
+
+           <Button 
+              type="button"
+              onClick={handleDemoAccess}
+              disabled={showLoader}
+              className="w-full bg-white border border-gray-200 text-gray-700 font-semibold h-11 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+            >
+              {t('demo_button')}
+            </Button>
+        </form>
+
+        <div className="text-center text-xs text-gray-500 mt-6">
+          {t('no_account')} <Link to="/auth/register" className="text-primary-600 font-bold hover:underline">{t('sign_up')}</Link>
+        </div>
+
+      </AuthLayout>
+    </>
   );
 };
 
