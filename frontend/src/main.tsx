@@ -1,19 +1,18 @@
-/**
- * @file src/main.tsx
- * @description Application Entry Point
- */
-
-// 1. IMPORT MOCK ADAPTER FIRST (Only in Dev)
-// This ensures that if we are in development, the API interceptors are attached
-// before any React components try to fetch data.
-if (import.meta.env.DEV) {
-  import('@/services/mock/mockAdapter');
-}
-
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
+
+// ----------------------------------------------------------------------
+// MOCK ADAPTER LOADER
+// ----------------------------------------------------------------------
+// Logic: Load the mock database if we are in:
+// 1. Development Mode (Localhost)
+// 2. Production Mode BUT with the "VITE_USE_MOCK" flag set to true (Cloudflare Preview)
+if (import.meta.env.DEV || import.meta.env.VITE_USE_MOCK === 'true') {
+  import('./services/mock/mockAdapter');
+  console.log('⚠️ [System] Mock Adapter Loaded. Using fake data.');
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
