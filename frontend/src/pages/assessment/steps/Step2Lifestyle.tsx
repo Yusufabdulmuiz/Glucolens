@@ -14,7 +14,7 @@ interface Step2Form {
 export default function Step2Lifestyle() {
   const { data, updateData, nextStep, prevStep } = useAssessmentStore();
   
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Step2Form>({
+  const { handleSubmit, setValue, watch, formState: { errors } } = useForm<Step2Form>({
     defaultValues: {
       activityLevel: data.activityLevel || undefined,
       sleepHours: data.sleepHours || 7, // Default to 7 for the slider

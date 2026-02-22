@@ -2,8 +2,7 @@ import { useState, useRef } from 'react';
 import { useAssessmentStore } from '@/store/assessmentStore';
 import { WizardLayout } from '../WizardLayout';
 import { Button } from '@/components/ui/Button';
-import { FileText, Upload, X, HelpCircle, Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Upload, X, HelpCircle, Check } from 'lucide-react';
 
 export default function Step4LabResults() {
   const { data, updateData, nextStep, prevStep } = useAssessmentStore();

@@ -46,7 +46,7 @@ export default function DashboardOverview() {
   const waistToHeightRatio = (waist > 0 && height > 0) ? (waist / height) : 0;
   const activityLevel = assessmentData.activityLevel || 'Not Set';
   
-  const currentRiskLevel = (stats?.riskScore || 0) > 70 ? 'high' : (stats?.riskScore || 0) > 40 ? 'medium' : 'low';
+ const currentRiskLevel = Number(stats?.riskScore || 0) > 70 ? 'high' : Number(stats?.riskScore || 0) > 40 ? 'medium' : 'low';
 
   const quickActions = [
     { title: 'Enter My Data', icon: Activity, desc: 'Add your health information', color: 'from-blue-500 to-blue-600', path: '/assessment' },
@@ -55,7 +55,7 @@ export default function DashboardOverview() {
     { title: 'Genomic Data', icon: Dna, desc: 'Optional precise prediction', color: 'from-teal-500 to-teal-600', path: '/assessment', optional: true },
     { title: 'Past Assessments', icon: History, desc: 'View your history', color: 'from-orange-500 to-orange-600', path: '/settings' },
     { title: 'Risk Score', icon: TrendingUp, desc: 'Check health status', color: 'from-green-500 to-green-600', path: '/dashboard' },
-  ];
+  ]; 
 
   if (isLoading) {
     return (

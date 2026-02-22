@@ -5,7 +5,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 export interface AssessmentData {
   // Step 1: Anthropometrics
   age: number | '';
-  gender: 'male' | 'female' | '';
+  gender: 'male' | 'female' | 'other' | '';
   height: number | ''; // cm
   weight: number | ''; // kg
   waistCircumference: number | ''; // cm
