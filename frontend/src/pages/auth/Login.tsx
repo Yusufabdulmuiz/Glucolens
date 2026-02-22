@@ -54,7 +54,7 @@ const Login = () => {
       const fakeUser = {
         id: "1",
         email: data.email, 
-        name: "Dr. Yusuf (Demo)",
+        name: "Jean Pierre",
         role: "doctor",
       };
       
