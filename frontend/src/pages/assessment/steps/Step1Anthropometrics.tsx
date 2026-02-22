@@ -4,7 +4,6 @@ import { WizardLayout } from '../WizardLayout';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
-// Define strict validation types for this step
 interface Step1Form {
   age: number;
   height: number;
@@ -25,9 +24,7 @@ export default function Step1Anthropometrics() {
   });
 
   const onSubmit = (formData: Step1Form) => {
-    // 1. Save data to store
     updateData(formData);
-    // 2. Move to Step 2
     nextStep();
   };
 
@@ -37,7 +34,8 @@ export default function Step1Anthropometrics() {
       description="Let's start with your key anthropometric measurements."
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid md:grid-cols-2 gap-6">
+        {/* RESPONSIVE: grid-cols-1 on mobile, 2 on medium+ */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input 
             label="Age (Years)" 
             type="number" 
@@ -46,7 +44,6 @@ export default function Step1Anthropometrics() {
             {...register('age', { required: true, min: 18, max: 100, valueAsNumber: true })}
           />
            
-           {/* Placeholder for Gender Selection (We will add a custom component later) */}
            <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">Gender</label>
               <select 

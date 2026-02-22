@@ -2,10 +2,6 @@ import api from './api';
 import { type AssessmentData } from '@/store/assessmentStore';
 
 export const assessmentService = {
-  /**
-   * Submit the full assessment data.
-   * Note: In a real app, we use FormData to send files + text.
-   */
   submitAssessment: async (data: AssessmentData) => {
     const formData = new FormData();
 
@@ -16,20 +12,32 @@ export const assessmentService = {
       }
     });
 
-    // 2. Append Files (if they exist)
+    // 2. Append Binary Files (if they exist)
     if (data.signsImage) formData.append('signsImage', data.signsImage);
     if (data.labFile) formData.append('labFile', data.labFile);
     if (data.genomicFile) formData.append('genomicFile', data.genomicFile);
 
-    // 3. Send to API (intercepted by Mock Adapter for now)
-    // Note: We use JSON.stringify for the mock to work easily, 
-    // but in real prod you'd send formData directly.
-    // For this Mock setup, we will convert to a plain object to prevent mock errors.
-    
-    // DEV MODE HELPER: Convert files to strings just for the mock to read them
-    const mockPayload = { ...data, signsImage: data.signsImage?.name, labFile: data.labFile?.name };
-    
-    const response = await api.post('/assessment/submit', mockPayload);
-    return response.data;
+    // 3. Determine Routing based on Environment
+    const isMockActive = import.meta.env.DEV || import.meta.env.VITE_USE_MOCK === 'true';
+
+    if (isMockActive) {
+      // DEV MODE: Send mapped strings so the mock adapter doesn't crash
+      const mockPayload = { 
+        ...data, 
+        signsImage: data.signsImage?.name, 
+        labFile: data.labFile?.name,
+        genomicFile: data.genomicFile?.name
+      };
+      const response = await api.post('/assessment/submit', mockPayload);
+      return response.data;
+    } else {
+      // PRODUCTION: Send true binary FormData to real backend
+      const response = await api.post('/assessment/submit', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    }
   }
 };

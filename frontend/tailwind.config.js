@@ -7,31 +7,76 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Primary Brand Colors (Royal Blue)
+        border: "var(--border)",
+        input: "var(--input)",
+        ring: "var(--ring)",
+        background: "var(--background)",
+        foreground: "var(--foreground)",
         primary: {
+          DEFAULT: "var(--primary)",
+          foreground: "var(--primary-foreground)",
+          // Keeping legacy shades for transition safety
           50: '#eff6ff',
           100: '#dbeafe',
-          500: '#3b82f6', // Standard Action Blue
-          600: '#2563eb', // Hover State
-          700: '#1d4ed8', // Active State
+          500: '#3b82f6', 
+          600: '#2563eb', 
+          700: '#1d4ed8', 
         },
-        // Risk Level Colors
+        secondary: {
+          DEFAULT: "var(--secondary)",
+          foreground: "var(--secondary-foreground)",
+        },
+        destructive: {
+          DEFAULT: "var(--destructive)",
+          foreground: "var(--destructive-foreground)",
+        },
+        muted: {
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
+        },
+        accent: {
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-foreground)",
+        },
+        popover: {
+          DEFAULT: "var(--popover)",
+          foreground: "var(--popover-foreground)",
+        },
+        card: {
+          DEFAULT: "var(--card)",
+          foreground: "var(--card-foreground)",
+        },
+        sidebar: {
+          DEFAULT: "var(--sidebar)",
+          foreground: "var(--sidebar-foreground)",
+          primary: "var(--sidebar-primary)",
+          "primary-foreground": "var(--sidebar-primary-foreground)",
+          accent: "var(--sidebar-accent)",
+          "accent-foreground": "var(--sidebar-accent-foreground)",
+          border: "var(--sidebar-border)",
+          ring: "var(--sidebar-ring)",
+        },
+        // Legacy Risk Colors (Safe to keep)
         risk: {
-          low: '#10b981',    // Emerald-500
-          medium: '#f59e0b', // Amber-500
-          high: '#ef4444',   // Red-500
+          low: '#10b981',    
+          medium: '#f59e0b', 
+          high: '#ef4444',   
         },
-        // Neutral Backgrounds
+        // Legacy neutral backgrounds mapped to new system
         surface: {
-          ground: '#f3f4f6', // Page Background
-          card: '#ffffff',   // Card Background
+          ground: 'var(--background)',
+          card: 'var(--card)',   
         }
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        // Soft, diffused shadow for the "Medical Clean" look
         'soft': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
       }
     },
