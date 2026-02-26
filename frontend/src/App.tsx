@@ -4,9 +4,9 @@ import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 // Page Imports
 import Login from '@/pages/auth/Login';
 import Register from '@/pages/auth/Register';
-import DashboardOverview from '@/pages/dashboard/Overview';
+import DashboardOverview from '@/components/dashboard/Overview';
 import AssessmentManager from '@/pages/assessment/AssessmentManager';
-import Settings from '@/pages/settings/Settings'; // <--- The Real Page
+import Settings from '@/pages/settings/Settings';
 
 const App = () => {
   return (

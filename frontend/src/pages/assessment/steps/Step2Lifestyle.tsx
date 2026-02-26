@@ -2,154 +2,215 @@ import { useForm } from 'react-hook-form';
 import { useAssessmentStore } from '@/store/assessmentStore';
 import { WizardLayout } from '../WizardLayout';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Activity, Moon, BookOpen, Users, Flame, Wine } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Moon, Activity, Users } from 'lucide-react';
 
 interface Step2Form {
-  activityLevel: 'sedentary' | 'light' | 'moderate' | 'active';
+  educationLevel: 'primary' | 'secondary' | 'college' | 'postgraduate' | '';
+  socialLife: 'very_active' | 'moderate' | 'limited' | '';
+  activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active' | '';
   sleepHours: number;
-  familyHistory: boolean; // true = Yes, false = No
+  smoking: 'never' | 'occasionally' | 'yes' | '';
+  alcohol: 'never' | 'occasionally' | 'regularly' | '';
 }
-
-// Helper component for the Big Selection Cards
-const SelectionCard = ({ selected, onClick, title, description, icon: Icon }: any) => (
-  <div 
-    onClick={onClick}
-    className={cn(
-      "cursor-pointer rounded-xl border-2 p-4 transition-all hover:border-primary-300 hover:bg-primary-50",
-      selected 
-        ? "border-primary-500 bg-primary-50 ring-1 ring-primary-500" 
-        : "border-gray-100 bg-white"
-    )}
-  >
-    <div className="flex items-start gap-3">
-      <div className={cn("p-2 rounded-lg", selected ? "bg-primary-500 text-white" : "bg-gray-100 text-gray-500")}>
-        <Icon className="h-5 w-5" />
-      </div>
-      <div>
-        <h3 className={cn("font-semibold text-sm", selected ? "text-primary-700" : "text-gray-900")}>{title}</h3>
-        <p className="text-xs text-gray-500 mt-1">{description}</p>
-      </div>
-    </div>
-  </div>
-);
 
 export default function Step2Lifestyle() {
   const { data, updateData, nextStep, prevStep } = useAssessmentStore();
   
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Step2Form>({
+const { handleSubmit, setValue, watch } = useForm<Step2Form>({
     defaultValues: {
-      activityLevel: data.activityLevel || undefined,
-      sleepHours: data.sleepHours || undefined,
-      familyHistory: data.familyHistory
+      educationLevel: data.educationLevel,
+      socialLife: data.socialLife,
+      activityLevel: data.activityLevel,
+      sleepHours: data.sleepHours === '' ? 7 : data.sleepHours,
+      smoking: data.smoking,
+      alcohol: data.alcohol
     }
   });
 
-  // Watch values to update UI state for custom selectors
+  const educationLevel = watch('educationLevel');
+  const socialLife = watch('socialLife');
   const activityLevel = watch('activityLevel');
-  const familyHistory = watch('familyHistory');
+  const sleepHours = watch('sleepHours');
+  const smoking = watch('smoking');
+  const alcohol = watch('alcohol');
 
   const onSubmit = (formData: Step2Form) => {
     updateData(formData);
+    // Note: We will wire this to assessmentService.submitLifestyle in the final API pass!
     nextStep();
   };
 
+  // UX Options Mapped
+  const educationOptions = [
+    { value: 'primary', label: 'Primary School' },
+    { value: 'secondary', label: 'Secondary School' },
+    { value: 'college', label: 'College/University' },
+    { value: 'postgraduate', label: 'Postgraduate' },
+  ] as const;
+
+  const socialOptions = [
+    { value: 'very_active', label: 'Very Active' },
+    { value: 'moderate', label: 'Moderate' },
+    { value: 'limited', label: 'Limited' },
+  ] as const;
+
+  const activityOptions = [
+    { value: 'sedentary', label: 'Sedentary' },
+    { value: 'light', label: 'Light Activity' },
+    { value: 'moderate', label: 'Moderate' },
+    { value: 'active', label: 'Active' },
+    { value: 'very_active', label: 'Very Active' },
+  ] as const;
+
+  const habitOptions = [
+    { value: 'never', label: 'Never' },
+    { value: 'occasionally', label: 'Occasionally' },
+  ] as const;
+
   return (
     <WizardLayout 
-      title="Lifestyle Factors" 
-      description="Your habits play a huge role in metabolic health."
+      title="Lifestyle Information" 
+      description="Help us understand your daily habits and lifestyle."
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
         
-        {/* 1. Activity Level Section */}
-        <div className="space-y-3">
-          <label className="text-sm font-medium text-gray-900">Physical Activity Level</label>
-          <div className="grid md:grid-cols-2 gap-3">
-            <SelectionCard 
-              title="Sedentary"
-              description="Little to no exercise, desk job."
-              icon={Activity}
-              selected={activityLevel === 'sedentary'}
-              onClick={() => setValue('activityLevel', 'sedentary')}
-            />
-            <SelectionCard 
-              title="Lightly Active"
-              description="Light exercise 1-3 days/week."
-              icon={Activity}
-              selected={activityLevel === 'light'}
-              onClick={() => setValue('activityLevel', 'light')}
-            />
-            <SelectionCard 
-              title="Moderately Active"
-              description="Moderate exercise 3-5 days/week."
-              icon={Activity}
-              selected={activityLevel === 'moderate'}
-              onClick={() => setValue('activityLevel', 'moderate')}
-            />
-            <SelectionCard 
-              title="Very Active"
-              description="Hard exercise 6-7 days/week."
-              icon={Activity}
-              selected={activityLevel === 'active'}
-              onClick={() => setValue('activityLevel', 'active')}
-            />
+        {/* -- SECTION 1: Socioeconomic -- */}
+        <div className="space-y-6">
+          
+          {/* Education Level */}
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-foreground font-medium">
+              <BookOpen className="w-5 h-5 text-primary" />
+              Education Level
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {educationOptions.map((opt) => (
+                <button
+                  key={opt.value} type="button"
+                  onClick={() => setValue('educationLevel', opt.value as any, { shouldValidate: true })}
+                  className={cn("py-3 px-4 rounded-lg border-2 text-sm font-medium transition-all text-center", educationLevel === opt.value ? "border-primary bg-primary/10 text-primary" : "border-input bg-background text-foreground hover:border-primary/50")}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
-          {errors.activityLevel && <p className="text-xs text-red-500">Please select an activity level</p>}
-          {/* Hidden input for validation to work with React Hook Form */}
-          <input type="hidden" {...register('activityLevel', { required: true })} />
+
+          {/* Social Life */}
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-foreground font-medium">
+              <Users className="w-5 h-5 text-primary" />
+              Social Life
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {socialOptions.map((opt) => (
+                <button
+                  key={opt.value} type="button"
+                  onClick={() => setValue('socialLife', opt.value as any, { shouldValidate: true })}
+                  className={cn("py-3 px-2 rounded-lg border-2 text-sm font-medium transition-all text-center", socialLife === opt.value ? "border-primary bg-primary/10 text-primary" : "border-input bg-background text-foreground hover:border-primary/50")}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* 2. Sleep Section */}
-        <div className="grid md:grid-cols-2 gap-8">
-           <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                 <Moon className="h-5 w-5 text-gray-400" />
-                 <label className="text-sm font-medium text-gray-900">Average Sleep (Hours/Night)</label>
-              </div>
-              <Input 
-                type="number" 
-                placeholder="e.g. 7.5" 
-                {...register('sleepHours', { required: true, min: 1, max: 24, valueAsNumber: true })}
-                error={errors.sleepHours && "Required (1-24)"}
-              />
-           </div>
+        {/* -- SECTION 2: Physical & Sleep -- */}
+        <div className="space-y-6">
+          
+          {/* Activity Level */}
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-foreground font-medium">
+              <Activity className="w-5 h-5 text-primary" />
+              Daily Physical Activity
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {activityOptions.map((opt) => (
+                <button
+                  key={opt.value} type="button"
+                  onClick={() => setValue('activityLevel', opt.value as any, { shouldValidate: true })}
+                  className={cn("py-2 px-4 rounded-full border-2 text-sm font-medium transition-all", activityLevel === opt.value ? "border-primary bg-primary text-white" : "border-input bg-background text-foreground hover:border-primary/50")}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-           {/* 3. Family History Section */}
-           <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                 <Users className="h-5 w-5 text-gray-400" />
-                 <label className="text-sm font-medium text-gray-900">Family Diabetes History?</label>
+          {/* Sleep Slider */}
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-foreground font-medium">
+              <Moon className="w-5 h-5 text-primary" />
+              Sleep Hours (per night)
+            </label>
+            <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <span className="text-sm font-bold text-slate-400">4h</span>
+              <input
+                type="range"
+                min="4" max="12" step="0.5"
+                value={sleepHours}
+                onChange={(e) => setValue('sleepHours', parseFloat(e.target.value))}
+                className="flex-1 accent-primary"
+              />
+              <span className="text-sm font-bold text-slate-400">12h</span>
+              <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 min-w-[80px] text-center ml-4">
+                <span className="text-primary font-bold text-lg">{sleepHours}</span>
+                <span className="text-slate-500 text-sm ml-1">hrs</span>
               </div>
-              <div className="flex gap-4">
-                <Button 
-                  type="button" 
-                  variant={familyHistory === true ? 'primary' : 'outline'}
-                  onClick={() => setValue('familyHistory', true)}
-                  className="flex-1"
-                >
-                  Yes
-                </Button>
-                <Button 
-                  type="button" 
-                  variant={familyHistory === false ? 'primary' : 'outline'}
-                  onClick={() => setValue('familyHistory', false)}
-                  className="flex-1"
-                >
-                  No
-                </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* -- SECTION 3: Habits -- */}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Smoking */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-foreground font-medium">
+                <Flame className="w-5 h-5 text-orange-500" />
+                Do you smoke?
+              </label>
+              <div className="flex flex-col gap-2">
+                {[...habitOptions, { value: 'yes', label: 'Yes' }].map((opt) => (
+                  <button
+                    key={opt.value} type="button"
+                    onClick={() => setValue('smoking', opt.value as any, { shouldValidate: true })}
+                    className={cn("py-3 px-4 rounded-lg border-2 text-sm font-medium transition-all text-left", smoking === opt.value ? "border-primary bg-primary/10 text-primary" : "border-input bg-background text-foreground hover:border-primary/50")}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
-           </div>
+            </div>
+
+            {/* Alcohol */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-foreground font-medium">
+                <Wine className="w-5 h-5 text-purple-500" />
+                Alcohol consumption
+              </label>
+              <div className="flex flex-col gap-2">
+                {[...habitOptions, { value: 'regularly', label: 'Regularly' }].map((opt) => (
+                  <button
+                    key={opt.value} type="button"
+                    onClick={() => setValue('alcohol', opt.value as any, { shouldValidate: true })}
+                    className={cn("py-3 px-4 rounded-lg border-2 text-sm font-medium transition-all text-left", alcohol === opt.value ? "border-primary bg-primary/10 text-primary" : "border-input bg-background text-foreground hover:border-primary/50")}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between pt-6 border-t border-gray-100">
-          <Button type="button" variant="ghost" onClick={prevStep}>
-            Back
-          </Button>
-          <Button type="submit" size="lg" className="px-8">
-            Next Step
-          </Button>
+        <div className="flex justify-between pt-6 border-t border-border">
+          <Button type="button" variant="ghost" onClick={prevStep}>Back</Button>
+          <Button type="submit" size="lg" className="px-8">Next Step</Button>
         </div>
       </form>
     </WizardLayout>
