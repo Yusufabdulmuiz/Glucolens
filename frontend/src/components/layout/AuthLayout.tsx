@@ -6,46 +6,56 @@ import { Logo } from '@/components/ui/Logo'; //
 interface AuthLayoutProps {
   children: React.ReactNode;
   className?: string;
+
 }
 
-
 /**
+
  * Layout wrapper for public authentication pages (Login, Register).
+
  * Centers content on a neutral background.
+
  */
+
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ 
   children, 
   className,
 }) => {
+
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-surface-ground p-4 relative overflow-hidden">
-      
-      {/* Global Utilities */}
+
+  <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4 relative overflow-hidden">
+     
       <div className="absolute top-4 right-4 z-50">
         <LanguageSelector />
       </div>
-
-      {/* Main Card Container */}
-      <div className={cn(
-        "w-full max-w-[400px] bg-white rounded-2xl shadow-soft p-8 sm:p-10 relative z-10",
-        "animate-in fade-in zoom-in-95 duration-300", 
-        className
-      )}>
-        
-        {/* App Header */}
-        <div className="flex flex-col items-center justify-center mb-8">
-          {/* Replaced hardcoded logo with component */}
+      <div className={cn("w-full max-w-md z-10", className)}>
+     
+        <div className="flex flex-col items-center justify-center mb-8 animate-in fade-in zoom-in-95 duration-300">
           <Logo layout="vertical" linkTo={null} />
+
         </div>
 
-        {children}
+        {/* Changed: Wrapped children in the UX Card style */}
+
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+
+          {children}
+
+        </div>
+
         
-        {/* Footer */}
-        <div className="text-center text-xs text-gray-400 mt-8">
-          <p>© 2026 Glucolens. Secure Medical Platform.</p>
+
+        <div className="mt-8 text-center text-sm text-gray-500">
+
+          <p>© 2026 Glucolens. All rights reserved.</p>
+
         </div>
 
       </div>
+
     </div>
+
   );
+
 };

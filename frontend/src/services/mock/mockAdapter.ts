@@ -90,19 +90,52 @@ const MOCK_GLUCOSE_HISTORY = [
 ];
 
 // ----------------------------------------------------------------------
-// ASSESSMENT MOCKS
+// ASSESSMENT MOCKS (Modular Phase 2)
 // ----------------------------------------------------------------------
 
-// POST /assessment/submit
-mock.onPost('/assessment/submit').reply((config) => {
-  console.info('[MockAPI] 🟢 Submitting Assessment:', JSON.parse(config.data));
+mock.onPost('/data/anthropometric').reply(200, {
+  status: "success",
+  message: "Anthropometric data saved securely."
+});
+
+mock.onPost('/data/lifestyle').reply(200, {
+  status: "success",
+  message: "Lifestyle data saved securely."
+});
+
+mock.onPost('/images/signs').reply(200, {
+  status: "success",
+  message: "Physical sign images analyzed and saved."
+});
+
+// The final trigger
+mock.onPost('/predict').reply((config: any) => {
+  const payload = JSON.parse(config.data);
   
-  // Simulate server processing time and return a success message
-  return [200, { 
-    success: true, 
-    message: 'Assessment analyzed successfully.',
-    riskScore: 'Low',
-    nextAction: 'Schedule follow-up'
+  // Dynamic Mock Risk Calculation
+  let baseScore = 35; // Default healthy
+  let riskLevel = 'Low';
+
+  if (payload.hba1c && payload.hba1c > 6.0) baseScore += 30;
+  if (payload.fasting_glucose && payload.fasting_glucose > 100) baseScore += 25;
+  if (payload.systolic_bp && payload.systolic_bp > 130) baseScore += 10;
+  
+  baseScore = Math.min(baseScore, 98);
+
+  if (baseScore > 75) riskLevel = 'Critical';
+  else if (baseScore > 50) riskLevel = 'High';
+  else if (baseScore > 30) riskLevel = 'Moderate';
+
+  return [200, {
+    id: `pred_${Math.random().toString(36).substr(2, 9)}`,
+    date: new Date().toISOString(),
+    riskScore: baseScore,
+    riskLevel: riskLevel,
+    contributingFactors: [
+      { feature: "HbA1c / Glucose", impact: payload.hba1c > 6.0 ? 0.8 : 0.2, description: "Recent lab values indicate metabolic state." },
+      { feature: "Anthropometrics", impact: 0.6, description: "BMI and waist circumference analysis." },
+      { feature: "Lifestyle", impact: 0.4, description: "Self-reported activity and sleep metrics." }
+    ]
   }];
 });
 

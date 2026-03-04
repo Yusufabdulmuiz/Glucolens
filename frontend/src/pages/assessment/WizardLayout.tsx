@@ -14,18 +14,18 @@ export const WizardLayout = ({ title, description, children }: WizardLayoutProps
 
   return (
     <AppLayout>
-      <div className="max-w-3xl mx-auto space-y-8">
+      <div className="max-w-3xl mx-auto space-y-6 md:space-y-8">
         
         {/* 1. Progress Header */}
         <div className="space-y-4">
-          <div className="flex justify-between items-end">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-2">
             <div>
-              <span className="text-primary-600 font-bold tracking-wide text-sm uppercase">
+              <span className="text-primary-600 font-bold tracking-wide text-xs md:text-sm uppercase">
                 Step {currentStep} of {totalSteps}
               </span>
-              <h1 className="text-3xl font-bold text-gray-900 mt-1">{title}</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mt-1">{title}</h1>
             </div>
-            <div className="text-sm text-gray-500 font-medium hidden sm:block">
+            <div className="text-sm text-gray-500 font-medium">
               {Math.round((currentStep / totalSteps) * 100)}% Complete
             </div>
           </div>
@@ -49,12 +49,12 @@ export const WizardLayout = ({ title, description, children }: WizardLayoutProps
           </div>
           
           {description && (
-            <p className="text-gray-500 text-lg">{description}</p>
+            <p className="text-gray-500 text-base md:text-lg">{description}</p>
           )}
         </div>
 
-        {/* 3. Form Content */}
-        <div className="bg-white p-8 rounded-xl shadow-soft border border-gray-100 animate-in slide-in-from-bottom-4 duration-500">
+        {/* 3. Form Content - RESPONSIVE: Less padding on mobile */}
+        <div className="bg-white p-4 md:p-8 rounded-xl shadow-soft border border-gray-100 animate-in slide-in-from-bottom-4 duration-500">
           {children}
         </div>
 
