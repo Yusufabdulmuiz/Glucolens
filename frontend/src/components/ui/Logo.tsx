@@ -18,7 +18,8 @@ export const Logo = ({
   const Content = (
     <>
       <div className={cn(
-        "flex items-center justify-center bg-primary-600 text-white shadow-soft transition-transform duration-300 group-hover:scale-105",
+        "flex items-center justify-center text-white shadow-soft transition-transform duration-300 group-hover:scale-105",
+        "bg-gradient-to-br from-blue-500 to-indigo-600", // <-- Updated with JP's new gradient
         isVertical ? "h-12 w-12 rounded-2xl" : "h-9 w-9 rounded-xl"
       )}>
         <Droplet 
@@ -31,7 +32,7 @@ export const Logo = ({
         "font-bold tracking-tight text-gray-900",
         isVertical ? "text-xl" : "text-lg"
       )}>
-        GlucoLens
+        Glucolens
       </span>
     </>
   );
@@ -61,4 +62,3 @@ export const Logo = ({
     </Link>
   );
 };
-
