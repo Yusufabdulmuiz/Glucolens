@@ -1,7 +1,12 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
-import App from './App';
+import App from './App'; 
+
+// ----------------------------------------------------------------------
+// CONFIGURATION IMPORTS
+// ----------------------------------------------------------------------
+import './lib/i18n'; // <--- NEW: Loads translation logic
 
 // ----------------------------------------------------------------------
 // MOCK ADAPTER LOADER
