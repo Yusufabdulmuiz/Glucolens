@@ -3,9 +3,15 @@ import api from './api';
 export interface DashboardStats {
   avgGlucose: number;
   glucoseChange: number;
-  riskScore: string;
+  riskScore: string | number;
   riskConfidence: number;
   hba1c: number;
+  
+  // NEW: Profile data expected from the backend
+  weight?: number;
+  height?: number;
+  waistCircumference?: number;
+  activityLevel?: string;
 }
 
 export interface GlucoseDataPoint {

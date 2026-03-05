@@ -11,13 +11,17 @@ export const loginSchema = z.object({
 
 /**
  * Registration Schema
- * Enforces strong password policies and matching confirmation.
+ * Enforces strong password policies, matching confirmation, and handles new phone/consent fields.
  */
 export const registerSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
+  phoneNumber: z.string().min(5, "Please enter a valid phone number"), // Added Phone Number
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
+  // Added Consent Checkboxes (optional, default to false if unchecked)
+  emailReminders: z.boolean().optional(),
+  smsReminders: z.boolean().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],

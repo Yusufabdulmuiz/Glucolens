@@ -35,18 +35,20 @@ export default function DashboardOverview() {
     fetchData();
   }, []);
 
+  // Keep this for profile completion logic (as they might still be filling it out)
   const fields = Object.values(assessmentData);
   const completionPercentage = Math.round((fields.filter(v => v !== '' && v !== null && v !== false).length / fields.length) * 100);
 
-  const weight = Number(assessmentData.weight) || 0;
-  const height = Number(assessmentData.height) || 0;
-  const waist = Number(assessmentData.waistCircumference) || 0;
+  // FIX 1: Pull metrics from the backend (stats) instead of local assessmentStore
+  const weight = Number(stats?.weight) || 0;
+  const height = Number(stats?.height) || 0;
+  const waist = Number(stats?.waistCircumference) || 0;
   
   const bmi = (weight > 0 && height > 0) ? (weight / Math.pow(height / 100, 2)) : 0;
   const waistToHeightRatio = (waist > 0 && height > 0) ? (waist / height) : 0;
-  const activityLevel = assessmentData.activityLevel || 'Not Set';
+  const activityLevel = stats?.activityLevel || 'Not Set';
   
- const currentRiskLevel = Number(stats?.riskScore || 0) > 70 ? 'high' : Number(stats?.riskScore || 0) > 40 ? 'medium' : 'low';
+  const currentRiskLevel = Number(stats?.riskScore || 0) > 70 ? 'high' : Number(stats?.riskScore || 0) > 40 ? 'medium' : 'low';
 
   const quickActions = [
     { title: 'Enter My Data', icon: Activity, desc: 'Add your health information', color: 'from-blue-500 to-blue-600', path: '/assessment' },
@@ -135,14 +137,15 @@ export default function DashboardOverview() {
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-md transition-all">
+            {/* FIX 2: Correctly display the ML Risk Score instead of Average Glucose */}
+            <Card className="hover:shadow-md transition-all border-orange-100">
               <CardContent className="p-5 pt-5">
                 <div className="flex items-center gap-2 mb-4">
                   <Target className="w-5 h-5 text-orange-600" />
                   <h3 className="font-medium text-foreground">AI Risk Summary</h3>
                 </div>
-                <div className="text-2xl font-bold text-foreground">{stats?.avgGlucose || 0} mg/dL</div>
-                <p className="text-muted-foreground text-xs mt-1">Avg Glucose (24h) • Confidence: {stats?.riskConfidence || 0}%</p>
+                <div className="text-2xl font-bold text-foreground">{stats?.riskScore || 0} / 100</div>
+                <p className="text-muted-foreground text-xs mt-1">Risk Level: {currentRiskLevel.toUpperCase()} • Confidence: {stats?.riskConfidence || 0}%</p>
               </CardContent>
             </Card>
 

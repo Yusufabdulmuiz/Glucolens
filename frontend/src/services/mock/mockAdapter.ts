@@ -179,26 +179,52 @@ const MOCK_ACTIVITY = [
   { id: 3, title: 'Profile Updated', desc: 'Weight changed to 72kg', time: '3 days ago' }
 ];
 
-// GET /dashboard/stats
-mock.onGet('/dashboard/stats').reply(200, MOCK_STATS);
 
-// GET /dashboard/glucose-history
-mock.onGet('/dashboard/glucose-history').reply(200, MOCK_GLUCOSE_HISTORY);
+// --- Dashboard Endpoints ---
+  
+  mock.onGet('/dashboard/stats').reply(() => {
+    // MAGIC TRICK FOR DEMO: Read the Zustand session storage to make the dashboard 
+    // reflect the user's actual inputs, simulating a real backend database!
+    let dynamicProfile = {
+      weight: 70,
+      height: 175,
+      waistCircumference: 80,
+      activityLevel: 'moderate',
+      riskScore: 35 // Default healthy score
+    };
 
-// GET /dashboard/activity
-mock.onGet('/dashboard/activity').reply(200, MOCK_ACTIVITY);
+    try {
+      const stored = sessionStorage.getItem('glucolens-assessment-storage');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const data = parsed?.state?.data;
+        if (data) {
+          if (data.weight) dynamicProfile.weight = Number(data.weight);
+          if (data.height) dynamicProfile.height = Number(data.height);
+          if (data.waistCircumference) dynamicProfile.waistCircumference = Number(data.waistCircumference);
+          if (data.activityLevel) dynamicProfile.activityLevel = data.activityLevel;
+          
+          // Simple dynamic score for the demo based on their inputs
+          let score = 35;
+          if (data.hba1c && Number(data.hba1c) > 6.0) score += 30;
+          if (data.hasDiabetes === true) score += 40;
+          dynamicProfile.riskScore = Math.min(score, 98);
+        }
+      }
+    } catch (e) {
+      console.warn("Mock API could not read session storage", e);
+    }
 
-console.log('[MockAPI] Dashboard endpoints initialized');
-
-/**
- * GET /user/profile
- * @returns {User}
- */
-mock.onGet('/user/profile').reply(200, MOCK_USER);
-
-console.warn(
-  '%c ⚠️ MOCK ADAPTER INITIALIZED ⚠️ \n API calls are being intercepted by the frontend. ',
-  'background: #F59E0B; color: black; font-weight: bold; padding: 4px; border-radius: 4px;'
-);
-
-export default mock;
+    return [200, {
+      avgGlucose: 105,
+      glucoseChange: -2.5,
+      riskScore: dynamicProfile.riskScore,
+      riskConfidence: 89,
+      hba1c: 5.4,
+      // The new profile fields expected by the Dashboard:
+      weight: dynamicProfile.weight,
+      height: dynamicProfile.height,
+      waistCircumference: dynamicProfile.waistCircumference,
+      activityLevel: dynamicProfile.activityLevel
+    }];
+  });
